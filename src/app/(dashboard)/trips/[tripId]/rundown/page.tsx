@@ -16,7 +16,10 @@ import {
   DollarSign,
   TrendingDown,
   Percent,
-  Edit2
+  Edit2,
+  ExternalLink,
+  Search,
+  X
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -225,13 +228,13 @@ export default function RundownPage() {
     }
     
     // Skip fetching if the query exactly matches a suggestion already selected
-    const matchesSuggestion = suggestions.some(s => s.display_name === location);
+    const matchesSuggestion = suggestions.some((s: any) => s.display_name === location);
     if (matchesSuggestion) return;
 
     const timer = setTimeout(async () => {
       setSearchLoading(true);
       try {
-        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(location)}&limit=5`, {
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(location)}&limit=6&countrycodes=id&addressdetails=1`, {
           headers: {
             'Accept-Language': 'id-ID,id;q=0.9,en;q=0.8'
           }
@@ -245,7 +248,7 @@ export default function RundownPage() {
       } finally {
         setSearchLoading(false);
       }
-    }, 450); // 450ms debounce
+    }, 400); // 400ms debounce
 
     return () => clearTimeout(timer);
   }, [location]);
@@ -673,37 +676,72 @@ export default function RundownPage() {
             </div>
 
             <div className="space-y-1.5 relative">
-              <Label htmlFor="location" className="text-xs font-semibold">Lokasi Kegiatan (Google Maps)</Label>
+              <Label htmlFor="location" className="text-xs font-semibold">Lokasi Kegiatan</Label>
               <div className="relative">
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                  <Search size={14} className="text-[oklch(0.48_0.01_40)]" />
+                </div>
                 <Input 
                   id="location" 
-                  placeholder="Ketik untuk mencari lokasi (contoh: Pantai Kuta)" 
+                  placeholder="Ketik nama lokasi (contoh: Stasiun Kiara Condong)" 
                   value={location} 
                   onChange={(e) => setLocation(e.target.value)} 
-                  className="rounded-xl border-[oklch(0.90_0.008_70)] pr-8"
+                  className="rounded-xl border-[oklch(0.90_0.008_70)] pl-9 pr-9"
                   autoComplete="off"
                 />
-                {searchLoading && (
+                {searchLoading ? (
                   <span className="absolute right-3 top-1/2 -translate-y-1/2">
                     <Loader2 className="animate-spin text-[oklch(0.48_0.01_40)]" size={14} />
                   </span>
-                )}
+                ) : location.length > 0 ? (
+                  <button
+                    type="button"
+                    onClick={() => { setLocation(''); setSuggestions([]); }}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[oklch(0.48_0.01_40)] hover:text-[oklch(0.22_0.01_40)] cursor-pointer"
+                  >
+                    <X size={14} />
+                  </button>
+                ) : null}
               </div>
               
+              {/* Autocomplete Suggestions Dropdown */}
               {suggestions.length > 0 && (
-                <div className="absolute z-50 left-0 right-0 mt-1 bg-white border border-[oklch(0.90_0.008_70)] rounded-xl shadow-lg max-h-48 overflow-y-auto divide-y divide-[oklch(0.90_0.008_70)]/50">
-                  {suggestions.map((item, idx) => (
+                <div className="absolute z-50 left-0 right-0 mt-1 bg-white border border-[oklch(0.90_0.008_70)] rounded-xl shadow-lg max-h-52 overflow-y-auto divide-y divide-[oklch(0.90_0.008_70)]/50">
+                  {suggestions.map((item: any, idx: number) => (
                     <button
                       key={idx}
                       type="button"
                       onClick={() => selectLocation(item.display_name)}
-                      className="w-full text-left px-3 py-2 text-[11px] hover:bg-[oklch(0.92_0.008_240)] text-[oklch(0.22_0.01_40)] truncate block"
+                      className="w-full text-left px-3 py-2.5 hover:bg-[oklch(0.92_0.008_240)] text-[oklch(0.22_0.01_40)] flex items-start gap-2 transition-colors"
                     >
-                      {item.display_name}
+                      <MapPin size={13} className="text-orange-500 shrink-0 mt-0.5" />
+                      <span className="text-[11px] leading-snug line-clamp-2">{item.display_name}</span>
                     </button>
                   ))}
                 </div>
               )}
+
+              {/* Fallback hint: search on Google Maps if location is not found */}
+              {location.length >= 3 && suggestions.length === 0 && !searchLoading && (
+                <div className="flex items-center gap-2 mt-1.5 p-2.5 rounded-xl bg-amber-50 border border-amber-100">
+                  <AlertCircle size={13} className="text-amber-500 shrink-0" />
+                  <p className="text-[10px] text-amber-700 flex-1">
+                    Lokasi tidak ditemukan di database? Tidak apa-apa, teks yang Anda ketik tetap tersimpan. Atau cari di Google Maps:
+                  </p>
+                  <a
+                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-[10px] font-bold text-[oklch(0.38_0.06_210)] hover:underline shrink-0 cursor-pointer"
+                  >
+                    <ExternalLink size={11} /> Google Maps
+                  </a>
+                </div>
+              )}
+
+              <p className="text-[10px] text-[oklch(0.48_0.01_40)] mt-1">
+                💡 Ketik langsung nama tempat yang Anda inginkan. Jika muncul saran, pilih salah satu. Jika tidak, teks Anda tetap tersimpan.
+              </p>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
