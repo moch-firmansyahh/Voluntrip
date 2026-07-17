@@ -186,28 +186,23 @@ export default function SidebarLayout({ children, user }: SidebarLayoutProps) {
           </div>
         </div>
 
-        {/* User Account Info & Logout */}
         <div className={`space-y-3 pt-6 border-t border-[oklch(0.90_0.008_70)] ${collapsed ? 'flex flex-col items-center' : ''}`}>
           {user && (
             collapsed ? (
               <Link href="/profile" title="Profile Settings">
-                {user.avatarUrl ? (
-                  <img src={user.avatarUrl} alt="Avatar" className="w-10 h-10 rounded-full object-cover shadow-sm cursor-pointer border border-[oklch(0.90_0.008_70)] p-0.5 bg-gradient-to-tr from-amber-50 to-orange-100" />
-                ) : (
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[oklch(0.70_0.08_40)] to-orange-400 flex items-center justify-center text-white font-heading font-extrabold text-sm shadow-sm cursor-pointer">
-                    {user.fullName.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase() || 'U'}
-                  </div>
-                )}
+                <img 
+                  src={user.avatarUrl || 'https://api.dicebear.com/7.x/adventurer/svg?seed=Felix'} 
+                  alt="Avatar" 
+                  className="w-10 h-10 rounded-full object-cover shadow-sm cursor-pointer border border-[oklch(0.90_0.008_70)] p-0.5 bg-gradient-to-tr from-amber-50 to-orange-100" 
+                />
               </Link>
             ) : (
               <Link href="/profile" className="px-2 py-1.5 rounded-xl hover:bg-[oklch(0.94_0.008_70)] transition-colors flex items-center gap-3">
-                {user.avatarUrl ? (
-                  <img src={user.avatarUrl} alt="Avatar" className="w-9 h-9 rounded-full object-cover shrink-0 border border-[oklch(0.90_0.008_70)] p-0.5 bg-gradient-to-tr from-amber-50 to-orange-100" />
-                ) : (
-                  <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-[oklch(0.70_0.08_40)] to-orange-400 flex items-center justify-center text-white font-heading font-bold text-xs shrink-0 shadow-sm">
-                    {user.fullName.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase() || 'U'}
-                  </div>
-                )}
+                <img 
+                  src={user.avatarUrl || 'https://api.dicebear.com/7.x/adventurer/svg?seed=Felix'} 
+                  alt="Avatar" 
+                  className="w-9 h-9 rounded-full object-cover shrink-0 border border-[oklch(0.90_0.008_70)] p-0.5 bg-gradient-to-tr from-amber-50 to-orange-100" 
+                />
                 <div className="min-w-0 flex-1">
                   <p className="font-semibold text-sm truncate">{user.fullName}</p>
                   <p className="text-xs text-[oklch(0.48_0.01_40)] truncate">@{user.username}</p>
@@ -316,13 +311,11 @@ export default function SidebarLayout({ children, user }: SidebarLayoutProps) {
                   onClick={() => setMobileMenuOpen(false)}
                   className="px-2 py-1.5 rounded-xl hover:bg-[oklch(0.94_0.008_70)] transition-colors flex items-center gap-3"
                 >
-                  {user.avatarUrl ? (
-                    <img src={user.avatarUrl} alt="Avatar" className="w-9 h-9 rounded-full object-cover shrink-0 border border-[oklch(0.90_0.008_70)] p-0.5 bg-gradient-to-tr from-amber-50 to-orange-100" />
-                  ) : (
-                    <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-[oklch(0.70_0.08_40)] to-orange-400 flex items-center justify-center text-white font-heading font-bold text-xs shrink-0 shadow-sm">
-                      {user.fullName.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase() || 'U'}
-                    </div>
-                  )}
+                  <img 
+                    src={user.avatarUrl || 'https://api.dicebear.com/7.x/adventurer/svg?seed=Felix'} 
+                    alt="Avatar" 
+                    className="w-9 h-9 rounded-full object-cover shrink-0 border border-[oklch(0.90_0.008_70)] p-0.5 bg-gradient-to-tr from-amber-50 to-orange-100" 
+                  />
                   <div className="min-w-0 flex-1">
                     <p className="font-semibold text-sm truncate">{user.fullName}</p>
                     <p className="text-xs text-[oklch(0.48_0.01_40)] truncate">@{user.username}</p>
