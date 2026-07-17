@@ -91,7 +91,7 @@ export default function LoginPage() {
                   placeholder="Masukkan username"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  className="pl-10 h-11 rounded-xl border-[oklch(0.90_0.008_70)] focus-visible:ring-[oklch(0.68_0.14_32)] focus-visible:border-[oklch(0.68_0.14_32)] text-sm transition-all"
+                  className="pl-10 h-11 rounded-xl border-[oklch(0.90_0.008_70)] focus-visible:ring-[oklch(0.70_0.08_40)] focus-visible:border-[oklch(0.70_0.08_40)] text-sm transition-all"
                   disabled={loading}
                 />
               </div>
@@ -112,7 +112,7 @@ export default function LoginPage() {
                   placeholder="Masukkan password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10 pr-10 h-11 rounded-xl border-[oklch(0.90_0.008_70)] focus-visible:ring-[oklch(0.68_0.14_32)] focus-visible:border-[oklch(0.68_0.14_32)] text-sm transition-all"
+                  className="pl-10 pr-10 h-11 rounded-xl border-[oklch(0.90_0.008_70)] focus-visible:ring-[oklch(0.70_0.08_40)] focus-visible:border-[oklch(0.70_0.08_40)] text-sm transition-all"
                   disabled={loading}
                 />
                 <button
@@ -130,7 +130,7 @@ export default function LoginPage() {
           <CardFooter className="px-8 pt-4 pb-8 flex flex-col gap-4">
             <Button
               type="submit"
-              className="w-full h-11 rounded-xl bg-[oklch(0.68_0.14_32)] text-white hover:bg-[oklch(0.68_0.14_32)]/90 font-medium text-sm transition-all shadow-md shadow-rose-100"
+              className="w-full h-11 rounded-xl bg-[oklch(0.70_0.08_40)] text-white hover:bg-[oklch(0.70_0.08_40)]/90 font-medium text-sm transition-all shadow-md shadow-rose-100"
               disabled={loading}
             >
               {loading ? (

@@ -151,7 +151,7 @@ export default function ProfilePage() {
         <div className="space-y-6">
           <Card className="rounded-3xl border-[oklch(0.90_0.008_70)] shadow-sm bg-white overflow-hidden text-center p-6">
             <div className="flex flex-col items-center space-y-4">
-              <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-[oklch(0.68_0.14_32)] to-orange-400 flex items-center justify-center text-white font-heading font-extrabold text-2xl shadow-lg shadow-rose-100">
+              <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-[oklch(0.70_0.08_40)] to-orange-400 flex items-center justify-center text-white font-heading font-extrabold text-2xl shadow-lg shadow-rose-100">
                 {getInitials(fullName)}
               </div>
               <div>
@@ -166,7 +166,7 @@ export default function ProfilePage() {
           {/* Stats Cards */}
           <div className="grid grid-cols-2 gap-4">
             <Card className="rounded-2xl border-[oklch(0.90_0.008_70)] shadow-sm bg-white p-4 flex flex-col items-center justify-center text-center">
-              <Map className="text-[oklch(0.68_0.14_32)] mb-2" size={20} />
+              <Map className="text-[oklch(0.70_0.08_40)] mb-2" size={20} />
               <span className="text-[10px] font-bold uppercase tracking-wider text-[oklch(0.48_0.01_40)]">Total Trips</span>
               <span className="font-heading font-extrabold text-lg mt-1">{stats.tripsCreated}</span>
             </Card>

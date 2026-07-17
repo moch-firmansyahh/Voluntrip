@@ -213,7 +213,7 @@ export default function TripDetailPage() {
               <span className="text-[10px] font-bold uppercase tracking-wider text-[oklch(0.48_0.01_40)]">Terpakai</span>
               <p className="text-xl font-extrabold font-heading text-[oklch(0.22_0.01_40)]">{formatIDR(totalSpend)}</p>
             </div>
-            <div className="w-10 h-10 rounded-xl bg-[oklch(0.97_0.015_32)] flex items-center justify-center text-[oklch(0.68_0.14_32)]">
+            <div className="w-10 h-10 rounded-xl bg-[oklch(0.86_0.05_45)] flex items-center justify-center text-[oklch(0.70_0.08_40)]">
               <TrendingDown size={18} />
             </div>
           </CardContent>
@@ -271,18 +271,18 @@ export default function TripDetailPage() {
             {/* Rundown Link Card */}
             <Link href={`/trips/${tripId}/rundown`} className="group block">
               <Card className="rounded-3xl border-[oklch(0.90_0.008_70)] shadow-sm bg-white hover:shadow-md transition-all p-6 space-y-4">
-                <div className="w-12 h-12 rounded-2xl bg-[oklch(0.97_0.015_32)] flex items-center justify-center text-[oklch(0.68_0.14_32)]">
+                <div className="w-12 h-12 rounded-2xl bg-[oklch(0.86_0.05_45)] flex items-center justify-center text-[oklch(0.70_0.08_40)]">
                   <Calendar size={24} />
                 </div>
                 <div>
-                  <h4 className="font-bold text-base text-[oklch(0.22_0.01_40)] group-hover:text-[oklch(0.68_0.14_32)] transition-colors">
+                  <h4 className="font-bold text-base text-[oklch(0.22_0.01_40)] group-hover:text-[oklch(0.70_0.08_40)] transition-colors">
                     Itinerary (Rundown)
                   </h4>
                   <p className="text-xs text-[oklch(0.48_0.01_40)] mt-1 leading-relaxed">
                     Susun jadwal kegiatan harian trip Anda secara visual, atur urutan aktivitas dengan drag and drop.
                   </p>
                 </div>
-                <div className="flex items-center gap-1 text-xs font-semibold text-[oklch(0.68_0.14_32)] pt-2 group-hover:translate-x-1 transition-transform">
+                <div className="flex items-center gap-1 text-xs font-semibold text-[oklch(0.70_0.08_40)] pt-2 group-hover:translate-x-1 transition-transform">
                   Atur Itinerary <ArrowRight size={14} />
                 </div>
               </Card>
@@ -291,18 +291,18 @@ export default function TripDetailPage() {
             {/* Budget & Expenses Link Card */}
             <Link href={`/trips/${tripId}/expenses`} className="group block">
               <Card className="rounded-3xl border-[oklch(0.90_0.008_70)] shadow-sm bg-white hover:shadow-md transition-all p-6 space-y-4">
-                <div className="w-12 h-12 rounded-2xl bg-teal-50 flex items-center justify-center text-[oklch(0.32_0.08_215)]">
+                <div className="w-12 h-12 rounded-2xl bg-teal-50 flex items-center justify-center text-[oklch(0.38_0.06_210)]">
                   <DollarSign size={24} />
                 </div>
                 <div>
-                  <h4 className="font-bold text-base text-[oklch(0.22_0.01_40)] group-hover:text-[oklch(0.32_0.08_215)] transition-colors">
+                  <h4 className="font-bold text-base text-[oklch(0.22_0.01_40)] group-hover:text-[oklch(0.38_0.06_210)] transition-colors">
                     Budget & Pengeluaran
                   </h4>
                   <p className="text-xs text-[oklch(0.48_0.01_40)] mt-1 leading-relaxed">
                     Catat pengeluaran trip Anda. Dapatkan visualisasi chart per kategori, dan hitung pembagian biaya bersama teman.
                   </p>
                 </div>
-                <div className="flex items-center gap-1 text-xs font-semibold text-[oklch(0.32_0.08_215)] pt-2 group-hover:translate-x-1 transition-transform">
+                <div className="flex items-center gap-1 text-xs font-semibold text-[oklch(0.38_0.06_210)] pt-2 group-hover:translate-x-1 transition-transform">
                   Atur Keuangan <ArrowRight size={14} />
                 </div>
               </Card>
@@ -316,7 +316,7 @@ export default function TripDetailPage() {
           
           <Card className="rounded-3xl border-[oklch(0.90_0.008_70)] shadow-sm bg-white overflow-hidden p-6 space-y-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-[oklch(0.97_0.015_32)] flex items-center justify-center text-[oklch(0.68_0.14_32)]">
+              <div className="w-10 h-10 rounded-xl bg-[oklch(0.86_0.05_45)] flex items-center justify-center text-[oklch(0.70_0.08_40)]">
                 <Share2 size={20} />
               </div>
               <div>
@@ -335,8 +335,8 @@ export default function TripDetailPage() {
                 onClick={handleToggleShare}
                 className={`w-full rounded-xl text-xs h-10 font-medium ${
                   trip.is_public 
-                    ? 'border-[oklch(0.90_0.008_70)] hover:bg-[oklch(0.97_0.015_32)]/50 text-[oklch(0.68_0.14_32)]' 
-                    : 'bg-[oklch(0.68_0.14_32)] text-white hover:bg-[oklch(0.68_0.14_32)]/90 shadow-sm shadow-rose-100'
+                    ? 'border-[oklch(0.90_0.008_70)] hover:bg-[oklch(0.86_0.05_45)]/50 text-[oklch(0.70_0.08_40)]' 
+                    : 'bg-[oklch(0.70_0.08_40)] text-white hover:bg-[oklch(0.70_0.08_40)]/90 shadow-sm shadow-rose-100'
                 }`}
                 disabled={sharingLoading}
               >

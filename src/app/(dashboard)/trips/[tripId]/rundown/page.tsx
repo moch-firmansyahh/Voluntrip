@@ -304,6 +304,19 @@ export default function RundownPage() {
     }
   };
 
+  // Delete Day
+  const handleDeleteDay = async (dayId: string, dayNumber: number) => {
+    if (!confirm(`Apakah Anda yakin ingin menghapus Hari ${dayNumber} beserta seluruh kegiatannya? Durasi perjalanan Anda akan otomatis disesuaikan (berkurang 1 hari).`)) return;
+    try {
+      const res = await fetch(`/api/rundown/day/${dayId}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Gagal menghapus hari');
+      
+      fetchRundownData();
+    } catch (err: any) {
+      alert(err.message);
+    }
+  };
+
   // Drag & Drop Handler (Within the same day)
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
@@ -389,7 +402,7 @@ export default function RundownPage() {
       {/* Header section */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="space-y-1">
-          <Link href={`/trips/${tripId}`} className="flex items-center gap-1.5 text-xs font-semibold text-[oklch(0.48_0.01_40)] hover:text-[oklch(0.68_0.14_32)] transition-colors">
+          <Link href={`/trips/${tripId}`} className="flex items-center gap-1.5 text-xs font-semibold text-[oklch(0.48_0.01_40)] hover:text-[oklch(0.70_0.08_40)] transition-colors">
             <ArrowLeft size={14} /> Back to Overview
           </Link>
           <h2 className="text-2xl font-extrabold font-heading text-[oklch(0.22_0.01_40)] tracking-tight">
@@ -400,35 +413,60 @@ export default function RundownPage() {
       </div>
 
       {/* Integrated Budget Summary Card */}
-      <Card className="rounded-3xl border-[oklch(0.90_0.008_70)] shadow-sm bg-white p-6 grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
-        <div className="space-y-1">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-[oklch(0.48_0.01_40)] block">Total Biaya Agenda</span>
-          <span className="font-heading font-extrabold text-2xl text-teal-600">{formatIDR(totalItineraryCost)}</span>
-          <span className="text-[10px] text-[oklch(0.48_0.01_40)] font-medium block">
-            dari budget {formatIDR(totalTripBudget)}
-          </span>
+      <Card className="rounded-3xl border-[oklch(0.90_0.008_70)] shadow-sm bg-white overflow-hidden">
+        <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-[oklch(0.90_0.008_70)]">
+          {/* Column 1: Total Budget */}
+          <div className="p-6 space-y-1">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-[oklch(0.48_0.01_40)] block">Total Budget Trip</span>
+            <span className="font-heading font-extrabold text-xl text-[oklch(0.38_0.06_210)] block">
+              {formatIDR(totalTripBudget)}
+            </span>
+            <span className="text-[10px] text-[oklch(0.48_0.01_40)] font-medium block">
+              Anggaran batas perjalanan
+            </span>
+          </div>
+
+          {/* Column 2: Total Terpakai */}
+          <div className="p-6 space-y-1">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-[oklch(0.48_0.01_40)] block">Total Estimasi Terpakai</span>
+            <span className="font-heading font-extrabold text-xl text-[oklch(0.70_0.08_40)] block">
+              {formatIDR(totalItineraryCost)}
+            </span>
+            <span className="text-[10px] text-[oklch(0.48_0.01_40)] font-medium block">
+              Dari seluruh agenda harian
+            </span>
+          </div>
+
+          {/* Column 3: Sisa Budget */}
+          <div className="p-6 space-y-1">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-[oklch(0.48_0.01_40)] block">Sisa Budget (Ditabulasikan)</span>
+            <span className={`font-heading font-extrabold text-xl block ${
+              totalTripBudget - totalItineraryCost < 0 ? 'text-red-500' : 'text-emerald-600'
+            }`}>
+              {formatIDR(totalTripBudget - totalItineraryCost)}
+            </span>
+            <span className="text-[10px] text-[oklch(0.48_0.01_40)] font-medium block">
+              {totalTripBudget - totalItineraryCost < 0 ? '⚠️ Melebihi budget!' : '✓ Sisa budget aman'}
+            </span>
+          </div>
         </div>
-        
-        <div className="space-y-2 md:col-span-2">
+
+        {/* Progress ratio footer */}
+        <div className="px-6 pb-6 pt-2 border-t border-[oklch(0.90_0.008_70)]/40 bg-[oklch(0.98_0.006_70)]/30 space-y-2">
           <div className="flex items-center justify-between text-xs font-bold">
-            <span className="text-[oklch(0.48_0.01_40)]">Rasio Budget Terpakai</span>
-            <span className={totalItineraryCost > totalTripBudget ? 'text-red-600' : 'text-teal-600'}>
+            <span className="text-[oklch(0.48_0.01_40)]">Persentase Terpakai</span>
+            <span className={totalItineraryCost > totalTripBudget ? 'text-red-500' : 'text-[oklch(0.38_0.06_210)]'}>
               {budgetRatio.toFixed(0)}%
             </span>
           </div>
-          <div className="w-full h-3 bg-[oklch(0.94_0.008_70)] rounded-full overflow-hidden">
+          <div className="w-full h-2.5 bg-[oklch(0.92_0.008_240)] rounded-full overflow-hidden">
             <div 
               className={`h-full rounded-full transition-all duration-500 ${
-                totalItineraryCost > totalTripBudget ? 'bg-red-500' : 'bg-teal-600'
+                totalItineraryCost > totalTripBudget ? 'bg-red-500' : 'bg-[oklch(0.70_0.08_40)]'
               }`} 
               style={{ width: `${budgetRatio}%` }}
             />
           </div>
-          <p className="text-[10px] text-[oklch(0.48_0.01_40)] font-medium">
-            {totalItineraryCost > totalTripBudget 
-              ? '⚠️ Anggaran agenda melebihi budget trip! Sesuaikan biaya kegiatan Anda.' 
-              : '✓ Estimasi anggaran kegiatan Anda masih aman.'}
-          </p>
         </div>
       </Card>
 
@@ -455,19 +493,27 @@ export default function RundownPage() {
                     </CardDescription>
                   </div>
 
-                  <div className="flex items-center gap-4">
-                    <div className="text-right">
+                  <div className="flex items-center gap-2">
+                    <div className="text-right mr-2">
                       <span className="text-[9px] uppercase tracking-wider text-[oklch(0.48_0.01_40)] block">
-                        Total Biaya Hari Ini
+                        Total Hari Ini
                       </span>
-                      <span className="font-extrabold text-sm text-teal-600">
+                      <span className="font-extrabold text-sm text-[oklch(0.38_0.06_210)]">
                         {formatIDR(dayCost)}
                       </span>
                     </div>
+
+                    <Button 
+                      variant="ghost"
+                      onClick={() => handleDeleteDay(day.id, dIdx + 1)}
+                      className="text-red-500 hover:text-red-600 hover:bg-red-50 rounded-xl text-xs h-9 px-2 gap-1.5"
+                    >
+                      <Trash2 size={13} /> Hapus Hari
+                    </Button>
                     
                     <Button 
                       onClick={() => openAddModal(day.id)}
-                      className="rounded-xl bg-[oklch(0.68_0.14_32)] text-white hover:bg-[oklch(0.68_0.14_32)]/90 text-xs h-9 px-3 gap-1 shadow-sm shadow-rose-50"
+                      className="rounded-xl bg-[oklch(0.70_0.08_40)] text-white hover:bg-[oklch(0.70_0.08_40)]/90 text-xs h-9 px-3 gap-1 shadow-sm shadow-rose-50"
                     >
                       <Plus size={14} /> Tambah Agenda
                     </Button>
@@ -615,7 +661,7 @@ export default function RundownPage() {
               <Button type="button" variant="ghost" onClick={() => setIsOpen(false)} className="rounded-xl text-xs">
                 Batal
               </Button>
-              <Button type="submit" disabled={formLoading} className="rounded-xl bg-[oklch(0.68_0.14_32)] text-white hover:bg-[oklch(0.68_0.14_32)]/90 text-xs">
+              <Button type="submit" disabled={formLoading} className="rounded-xl bg-[oklch(0.70_0.08_40)] text-white hover:bg-[oklch(0.70_0.08_40)]/90 text-xs">
                 {formLoading ? <Loader2 className="animate-spin mr-1.5" size={14} /> : null}
                 {editingActivity ? 'Simpan Perubahan' : 'Tambah Agenda'}
               </Button>
