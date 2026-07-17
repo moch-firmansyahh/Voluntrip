@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
 import { 
@@ -219,6 +219,7 @@ export default function RundownPage() {
   // Suggestions search states
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
+  const locationSelectedRef = useRef(false);
 
   // Debounced search for locations using free Nominatim API with fuzzy fallback
   useEffect(() => {
@@ -227,9 +228,11 @@ export default function RundownPage() {
       return;
     }
     
-    // Skip fetching if the query exactly matches a suggestion already selected
-    const matchesSuggestion = suggestions.some((s: any) => s.display_name === location);
-    if (matchesSuggestion) return;
+    // Skip fetching if user just selected a location from the dropdown
+    if (locationSelectedRef.current) {
+      locationSelectedRef.current = false;
+      return;
+    }
 
     const timer = setTimeout(async () => {
       setSearchLoading(true);
@@ -295,6 +298,7 @@ export default function RundownPage() {
   }, [location]);
 
   const selectLocation = (displayName: string) => {
+    locationSelectedRef.current = true;
     setLocation(displayName);
     setSuggestions([]);
   };
