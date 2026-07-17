@@ -304,7 +304,7 @@ export default function ExpensesPage() {
       {/* Header bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="space-y-1">
-          <Link href={`/trips/${tripId}`} className="flex items-center gap-1.5 text-xs font-semibold text-[oklch(0.48_0.01_40)] hover:text-[oklch(0.64_0.22_30)] transition-colors">
+          <Link href={`/trips/${tripId}`} className="flex items-center gap-1.5 text-xs font-semibold text-[oklch(0.48_0.01_40)] hover:text-[oklch(0.68_0.14_32)] transition-colors">
             <ArrowLeft size={14} /> Back to Overview
           </Link>
           <h2 className="text-2xl font-extrabold font-heading text-[oklch(0.22_0.01_40)] tracking-tight">
@@ -315,7 +315,7 @@ export default function ExpensesPage() {
         
         <Button 
           onClick={() => { resetForm(); setIsAddOpen(true); }}
-          className="rounded-xl bg-[oklch(0.64_0.22_30)] text-white hover:bg-[oklch(0.64_0.22_30)]/90 gap-1.5 shadow-md shadow-orange-100 self-start sm:self-auto"
+          className="rounded-xl bg-[oklch(0.68_0.14_32)] text-white hover:bg-[oklch(0.68_0.14_32)]/90 gap-1.5 shadow-md shadow-rose-100 self-start sm:self-auto"
         >
           <Plus size={18} />
           Catat Pengeluaran
@@ -333,7 +333,7 @@ export default function ExpensesPage() {
         <div className="w-full h-3.5 bg-[oklch(0.94_0.008_70)] rounded-full overflow-hidden">
           <div 
             className={`h-full rounded-full transition-all duration-500 ${
-              budgetPercentage > 90 ? 'bg-red-500' : budgetPercentage > 75 ? 'bg-yellow-500' : 'bg-[oklch(0.64_0.22_30)]'
+              budgetPercentage > 90 ? 'bg-red-500' : budgetPercentage > 75 ? 'bg-yellow-500' : 'bg-[oklch(0.68_0.14_32)]'
             }`} 
             style={{ width: `${budgetPercentage}%` }}
           />
@@ -356,7 +356,7 @@ export default function ExpensesPage() {
             {/* Pie Chart Card */}
             <Card className="rounded-3xl border-[oklch(0.90_0.008_70)] shadow-sm bg-white p-6 flex flex-col justify-between h-80">
               <CardTitle className="text-sm font-bold flex items-center gap-1.5 pb-2">
-                <PieChart size={18} className="text-[oklch(0.64_0.22_30)]" /> Kategori Pengeluaran
+                <PieChart size={18} className="text-[oklch(0.68_0.14_32)]" /> Kategori Pengeluaran
               </CardTitle>
               {chartData.length === 0 ? (
                 <div className="flex-1 flex items-center justify-center text-xs text-[oklch(0.48_0.01_40)]">
@@ -398,7 +398,7 @@ export default function ExpensesPage() {
             {trip.expense_mode === 'split' && (
               <Card className="rounded-3xl border-[oklch(0.90_0.008_70)] shadow-sm bg-white p-6 flex flex-col h-80 overflow-hidden">
                 <CardTitle className="text-sm font-bold flex items-center gap-1.5 pb-2 shrink-0">
-                  <Users size={18} className="text-[oklch(0.58_0.16_185)]" /> Ringkasan Split Bill
+                  <Users size={18} className="text-[oklch(0.32_0.08_215)]" /> Ringkasan Split Bill
                 </CardTitle>
                 <p className="text-[10px] text-[oklch(0.48_0.01_40)] pb-4 shrink-0">
                   Tagihan yang harus dibayarkan peserta kepada pembuat trip.
@@ -416,7 +416,7 @@ export default function ExpensesPage() {
                           <span className="text-[9px] uppercase tracking-wider text-[oklch(0.48_0.01_40)] block">
                             Hutang ke Anda
                           </span>
-                          <span className="font-extrabold text-xs text-[oklch(0.58_0.16_185)]">
+                          <span className="font-extrabold text-xs text-[oklch(0.32_0.08_215)]">
                             {formatIDR(splitBalances[name])}
                           </span>
                         </div>
@@ -466,7 +466,7 @@ export default function ExpensesPage() {
                           <span className="font-extrabold text-base text-[oklch(0.22_0.01_40)]">
                             {formatIDR(expense.amount)}
                           </span>
-                          <span className="bg-orange-50 text-[oklch(0.64_0.22_30)] font-bold text-[9px] px-2 py-0.5 rounded-full uppercase tracking-wider">
+                          <span className="bg-[oklch(0.97_0.015_32)] text-[oklch(0.68_0.14_32)] font-bold text-[9px] px-2 py-0.5 rounded-full uppercase tracking-wider">
                             {expense.category_name || 'Lainnya'}
                           </span>
                         </div>
@@ -484,7 +484,7 @@ export default function ExpensesPage() {
                               Splits:
                             </span>
                             {expense.participants.map(p => (
-                              <span key={p.id} className="text-[9px] bg-teal-50 text-[oklch(0.58_0.16_185)] font-semibold px-2 py-0.5 rounded-md">
+                              <span key={p.id} className="text-[9px] bg-teal-50 text-[oklch(0.32_0.08_215)] font-semibold px-2 py-0.5 rounded-md">
                                 {p.participant_name} ({formatIDR(p.share_amount)})
                               </span>
                             ))}
@@ -513,7 +513,7 @@ export default function ExpensesPage() {
           <h3 className="text-lg font-bold font-heading">Budget Advisor</h3>
           <Card className="rounded-3xl border-[oklch(0.90_0.008_70)] shadow-sm bg-white p-6 space-y-4">
             <div className="flex items-center gap-2">
-              <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center text-[oklch(0.64_0.22_30)] shrink-0">
+              <div className="w-10 h-10 rounded-xl bg-[oklch(0.97_0.015_32)] flex items-center justify-center text-[oklch(0.68_0.14_32)] shrink-0">
                 <Coins size={20} />
               </div>
               <div>
@@ -647,8 +647,8 @@ export default function ExpensesPage() {
                       onClick={() => setSplitEqually(!splitEqually)}
                       className={`h-7 px-2.5 rounded-lg text-[10px] font-bold ${
                         splitEqually 
-                          ? 'bg-teal-50 text-[oklch(0.58_0.16_185)]' 
-                          : 'bg-orange-50 text-[oklch(0.64_0.22_30)]'
+                          ? 'bg-teal-50 text-[oklch(0.32_0.08_215)]' 
+                          : 'bg-[oklch(0.97_0.015_32)] text-[oklch(0.68_0.14_32)]'
                       }`}
                     >
                       {splitEqually ? 'Bagi Rata' : 'Bagi Custom'}
@@ -667,7 +667,7 @@ export default function ExpensesPage() {
                   <Button 
                     type="button" 
                     onClick={handleAddParticipant}
-                    className="rounded-xl bg-[oklch(0.58_0.16_185)] text-white hover:bg-[oklch(0.58_0.16_185)]/90 text-xs h-9"
+                    className="rounded-xl bg-[oklch(0.32_0.08_215)] text-white hover:bg-[oklch(0.32_0.08_215)]/90 text-xs h-9"
                   >
                     Tambah
                   </Button>
@@ -719,7 +719,7 @@ export default function ExpensesPage() {
               <Button type="button" variant="ghost" onClick={() => setIsAddOpen(false)} className="rounded-xl text-xs">
                 Batal
               </Button>
-              <Button type="submit" disabled={formLoading} className="rounded-xl bg-[oklch(0.64_0.22_30)] text-white hover:bg-[oklch(0.64_0.22_30)]/90 text-xs">
+              <Button type="submit" disabled={formLoading} className="rounded-xl bg-[oklch(0.68_0.14_32)] text-white hover:bg-[oklch(0.68_0.14_32)]/90 text-xs">
                 {formLoading ? <Loader2 className="animate-spin mr-1.5" size={14} /> : null}
                 Simpan
               </Button>

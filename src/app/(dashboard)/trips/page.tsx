@@ -199,7 +199,7 @@ export default function TripsPage() {
         </div>
         <Button 
           onClick={() => { resetForm(); setIsCreateOpen(true); }}
-          className="rounded-xl bg-[oklch(0.64_0.22_30)] text-white hover:bg-[oklch(0.64_0.22_30)]/90 gap-1.5 shadow-md shadow-orange-100"
+          className="rounded-xl bg-[oklch(0.68_0.14_32)] text-white hover:bg-[oklch(0.68_0.14_32)]/90 gap-1.5 shadow-md shadow-rose-100"
         >
           <Plus size={18} />
           Buat Trip
@@ -225,7 +225,7 @@ export default function TripsPage() {
           </div>
           <Button 
             onClick={() => setIsCreateOpen(true)}
-            className="rounded-xl bg-[oklch(0.64_0.22_30)] text-white hover:bg-[oklch(0.64_0.22_30)]/90"
+            className="rounded-xl bg-[oklch(0.68_0.14_32)] text-white hover:bg-[oklch(0.68_0.14_32)]/90"
           >
             Buat Trip Pertama
           </Button>
@@ -247,7 +247,7 @@ export default function TripsPage() {
                   </div>
                 )}
                 {/* Mode Tag */}
-                <div className="absolute top-4 left-4 bg-white/95 backdrop-blur px-2.5 py-1 rounded-full text-[10px] font-bold text-[oklch(0.64_0.22_30)] shadow-sm uppercase tracking-wider">
+                <div className="absolute top-4 left-4 bg-white/95 backdrop-blur px-2.5 py-1 rounded-full text-[10px] font-bold text-[oklch(0.68_0.14_32)] shadow-sm uppercase tracking-wider">
                   {trip.expense_mode === 'split' ? 'Split Bill' : 'Per Trip'}
                 </div>
 
@@ -271,7 +271,7 @@ export default function TripsPage() {
 
               <CardContent className="p-5 flex-1 flex flex-col justify-between gap-4">
                 <div className="space-y-1">
-                  <h3 className="font-heading font-extrabold text-base text-[oklch(0.22_0.01_40)] leading-snug group-hover:text-[oklch(0.64_0.22_30)] transition-colors">
+                  <h3 className="font-heading font-extrabold text-base text-[oklch(0.22_0.01_40)] leading-snug group-hover:text-[oklch(0.68_0.14_32)] transition-colors">
                     {trip.name}
                   </h3>
                   <div className="flex items-center gap-1.5 text-xs text-[oklch(0.48_0.01_40)] font-medium">
@@ -294,7 +294,7 @@ export default function TripsPage() {
                     </span>
                   </div>
                   <Link href={`/trips/${trip.id}`}>
-                    <Button size="sm" className="rounded-lg bg-[oklch(0.64_0.22_30)] text-white hover:bg-[oklch(0.64_0.22_30)]/90 text-xs font-semibold px-3 py-1.5 shadow-sm shadow-orange-50">
+                    <Button size="sm" className="rounded-lg bg-[oklch(0.68_0.14_32)] text-white hover:bg-[oklch(0.68_0.14_32)]/90 text-xs font-semibold px-3 py-1.5 shadow-sm shadow-rose-50">
                       Buka Rencana
                     </Button>
                   </Link>
@@ -407,7 +407,7 @@ export default function TripsPage() {
               <Button type="button" variant="ghost" onClick={() => setIsCreateOpen(false)} className="rounded-xl text-xs">
                 Batal
               </Button>
-              <Button type="submit" disabled={formLoading} className="rounded-xl bg-[oklch(0.64_0.22_30)] text-white hover:bg-[oklch(0.64_0.22_30)]/90 text-xs">
+              <Button type="submit" disabled={formLoading} className="rounded-xl bg-[oklch(0.68_0.14_32)] text-white hover:bg-[oklch(0.68_0.14_32)]/90 text-xs">
                 {formLoading ? <Loader2 className="animate-spin mr-1.5" size={14} /> : null}
                 Buat Trip
               </Button>
@@ -518,7 +518,7 @@ export default function TripsPage() {
               <Button type="button" variant="ghost" onClick={() => setIsEditOpen(false)} className="rounded-xl text-xs">
                 Batal
               </Button>
-              <Button type="submit" disabled={formLoading} className="rounded-xl bg-[oklch(0.64_0.22_30)] text-white hover:bg-[oklch(0.64_0.22_30)]/90 text-xs">
+              <Button type="submit" disabled={formLoading} className="rounded-xl bg-[oklch(0.68_0.14_32)] text-white hover:bg-[oklch(0.68_0.14_32)]/90 text-xs">
                 {formLoading ? <Loader2 className="animate-spin mr-1.5" size={14} /> : null}
                 Simpan Perubahan
               </Button>

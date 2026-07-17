@@ -10,9 +10,11 @@ import {
   Calendar, 
   DollarSign, 
   ChevronLeft, 
+  ChevronRight,
   Menu, 
   X, 
-  Compass
+  Compass,
+  User
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -31,6 +33,7 @@ export default function SidebarLayout({ children, user }: SidebarLayoutProps) {
   const tripId = params?.tripId as string | undefined;
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
 
   const handleLogout = async () => {
     try {
@@ -48,6 +51,7 @@ export default function SidebarLayout({ children, user }: SidebarLayoutProps) {
   const mainNavItems = [
     { name: 'Dashboard', href: '/dashboard', icon: Home },
     { name: 'My Trips', href: '/trips', icon: Map },
+    { name: 'Profile Settings', href: '/profile', icon: User },
   ];
 
   // Specific trip sub-navigation links
@@ -79,11 +83,31 @@ export default function SidebarLayout({ children, user }: SidebarLayoutProps) {
       </header>
 
       {/* DESKTOP SIDEBAR */}
-      <aside className="hidden md:flex flex-col w-64 bg-white border-r border-[oklch(0.90_0.008_70)] shrink-0 sticky top-0 h-screen p-6 justify-between shadow-sm">
+      <aside 
+        className={`hidden md:flex flex-col relative bg-white border-r border-[oklch(0.90_0.008_70)] shrink-0 sticky top-0 h-screen justify-between shadow-sm transition-all duration-300 ease-in-out ${
+          collapsed ? 'w-20 px-3 py-6' : 'w-64 p-6'
+        }`}
+      >
+        {/* Collapse toggle button */}
+        <button 
+          type="button"
+          onClick={() => setCollapsed(!collapsed)} 
+          className="absolute -right-3 top-10 bg-white border border-[oklch(0.90_0.008_70)] rounded-full h-6 w-6 p-0 shadow-sm z-50 cursor-pointer flex items-center justify-center hover:bg-[oklch(0.97_0.015_32)] text-[oklch(0.48_0.01_40)] hover:text-[oklch(0.22_0.01_40)]"
+        >
+          {collapsed ? <ChevronRight size={12} /> : <ChevronLeft size={12} />}
+        </button>
+
         <div className="space-y-6">
           {/* Logo Branding */}
-          <div className="flex items-center gap-3 px-2">
-            <img src="/images/Logo_voluntrip.png" alt="Voluntrip Logo" className="h-10 w-auto object-contain" />
+          <div className={`flex items-center transition-all duration-300 ${collapsed ? 'justify-center w-full' : 'gap-3 px-2'}`}>
+            <div className={`overflow-hidden transition-all duration-300 flex items-center ${collapsed ? 'w-10 h-10 justify-center' : 'w-full h-10'}`}>
+              <img 
+                src="/images/Logo_voluntrip.png" 
+                alt="Voluntrip Logo" 
+                className="h-10 max-w-none object-contain" 
+                style={{ width: collapsed ? '110px' : '150px', transform: collapsed ? 'translateX(-12px)' : 'none' }}
+              />
+            </div>
           </div>
 
           <hr className="border-[oklch(0.90_0.008_70)]" />
@@ -93,9 +117,13 @@ export default function SidebarLayout({ children, user }: SidebarLayoutProps) {
             <div className="space-y-1">
               <Link 
                 href="/trips" 
-                className="flex items-center gap-2 text-xs font-semibold uppercase text-[oklch(0.48_0.01_40)] hover:text-[oklch(0.64_0.22_30)] transition-colors py-2 px-2"
+                className={`flex items-center gap-2 text-xs font-semibold uppercase text-[oklch(0.48_0.01_40)] hover:text-[oklch(0.68_0.14_32)] transition-colors py-2 ${
+                  collapsed ? 'justify-center' : 'px-2'
+                }`}
+                title="Back to All Trips"
               >
-                <ChevronLeft size={14} /> Back to All Trips
+                <ChevronLeft size={14} /> 
+                {!collapsed && <span>All Trips</span>}
               </Link>
               <div className="mt-2 space-y-1">
                 {tripNavItems.map((item) => {
@@ -105,14 +133,19 @@ export default function SidebarLayout({ children, user }: SidebarLayoutProps) {
                     <Link
                       key={item.href}
                       href={item.href}
-                      className={`flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-sm transition-all ${
+                      className={`flex items-center transition-all duration-300 rounded-xl font-medium text-sm ${
+                        collapsed 
+                          ? 'justify-center p-2.5 h-10 w-10 mx-auto' 
+                          : 'gap-3 px-3 py-2.5'
+                      } ${
                         active 
-                          ? 'bg-[oklch(0.96_0.02_30)] text-[oklch(0.64_0.22_30)] font-semibold shadow-sm' 
+                          ? 'bg-[oklch(0.97_0.015_32)] text-[oklch(0.68_0.14_32)] font-semibold shadow-sm' 
                           : 'text-[oklch(0.48_0.01_40)] hover:bg-[oklch(0.94_0.008_70)] hover:text-[oklch(0.22_0.01_40)]'
                       }`}
+                      title={collapsed ? item.name : undefined}
                     >
-                      <Icon size={18} className={active ? 'text-[oklch(0.64_0.22_30)]' : ''} />
-                      {item.name}
+                      <Icon size={18} className={active ? 'text-[oklch(0.68_0.14_32)]' : ''} />
+                      {!collapsed && <span>{item.name}</span>}
                     </Link>
                   );
                 })}
@@ -122,25 +155,31 @@ export default function SidebarLayout({ children, user }: SidebarLayoutProps) {
 
           {/* Main App Navigation */}
           <div className="space-y-1">
-            <span className="text-xs font-bold uppercase tracking-wider text-[oklch(0.48_0.01_40)] px-3 block mb-2">
-              Navigation
-            </span>
+            {!collapsed && (
+              <span className="text-xs font-bold uppercase tracking-wider text-[oklch(0.48_0.01_40)] px-3 block mb-2">
+                Navigation
+              </span>
+            )}
             {mainNavItems.map((item) => {
               const Icon = item.icon;
-              // Highlight dashboard when no trip is active, or highlight active main items
               const active = isActive(item.href);
               return (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-sm transition-all ${
+                  className={`flex items-center transition-all duration-300 rounded-xl font-medium text-sm ${
+                    collapsed 
+                      ? 'justify-center p-2.5 h-10 w-10 mx-auto' 
+                      : 'gap-3 px-3 py-2.5'
+                  } ${
                     active 
-                      ? 'bg-[oklch(0.94_0.008_70)] text-[oklch(0.22_0.01_40)] font-semibold' 
+                      ? 'bg-[oklch(0.94_0.008_70)] text-[oklch(0.22_0.01_40)] font-semibold shadow-sm' 
                       : 'text-[oklch(0.48_0.01_40)] hover:bg-[oklch(0.94_0.008_70)] hover:text-[oklch(0.22_0.01_40)]'
                   }`}
+                  title={collapsed ? item.name : undefined}
                 >
                   <Icon size={18} />
-                  {item.name}
+                  {!collapsed && <span>{item.name}</span>}
                 </Link>
               );
             })}
@@ -148,20 +187,33 @@ export default function SidebarLayout({ children, user }: SidebarLayoutProps) {
         </div>
 
         {/* User Account Info & Logout */}
-        <div className="space-y-3 pt-6 border-t border-[oklch(0.90_0.008_70)]">
+        <div className={`space-y-3 pt-6 border-t border-[oklch(0.90_0.008_70)] ${collapsed ? 'flex flex-col items-center' : ''}`}>
           {user && (
-            <div className="px-2">
-              <p className="font-semibold text-sm truncate">{user.fullName}</p>
-              <p className="text-xs text-[oklch(0.48_0.01_40)] truncate">@{user.username}</p>
-            </div>
+            collapsed ? (
+              <Link href="/profile" title="Profile Settings">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[oklch(0.68_0.14_32)] to-orange-400 flex items-center justify-center text-white font-heading font-extrabold text-sm shadow-sm cursor-pointer">
+                  {user.fullName.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase() || 'U'}
+                </div>
+              </Link>
+            ) : (
+              <Link href="/profile" className="px-2 block hover:bg-[oklch(0.94_0.008_70)] py-1.5 rounded-xl transition-colors">
+                <p className="font-semibold text-sm truncate">{user.fullName}</p>
+                <p className="text-xs text-[oklch(0.48_0.01_40)] truncate">@{user.username}</p>
+              </Link>
+            )
           )}
           <Button 
             variant="ghost" 
             onClick={handleLogout} 
-            className="w-full justify-start text-[oklch(0.48_0.01_40)] hover:text-red-600 hover:bg-red-50 rounded-xl gap-3 text-sm py-2 px-3 font-medium transition-colors"
+            className={`text-[oklch(0.48_0.01_40)] hover:text-red-600 hover:bg-red-50 rounded-xl font-medium transition-colors ${
+              collapsed 
+                ? 'justify-center p-2.5 h-10 w-10 mx-auto' 
+                : 'w-full justify-start gap-3 text-sm py-2 px-3'
+            }`}
+            title={collapsed ? "Logout" : undefined}
           >
             <LogOut size={18} />
-            Logout
+            {!collapsed && <span>Logout</span>}
           </Button>
         </div>
       </aside>
@@ -189,7 +241,7 @@ export default function SidebarLayout({ children, user }: SidebarLayoutProps) {
                   <Link 
                     href="/trips" 
                     onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center gap-2 text-xs font-semibold uppercase text-[oklch(0.48_0.01_40)] hover:text-[oklch(0.64_0.22_30)] py-2 px-2"
+                    className="flex items-center gap-2 text-xs font-semibold uppercase text-[oklch(0.48_0.01_40)] hover:text-[oklch(0.68_0.14_32)] py-2 px-2"
                   >
                     <ChevronLeft size={14} /> All Trips
                   </Link>
@@ -204,7 +256,7 @@ export default function SidebarLayout({ children, user }: SidebarLayoutProps) {
                           onClick={() => setMobileMenuOpen(false)}
                           className={`flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-sm transition-all ${
                             active 
-                              ? 'bg-[oklch(0.96_0.02_30)] text-[oklch(0.64_0.22_30)] font-semibold' 
+                              ? 'bg-[oklch(0.97_0.015_32)] text-[oklch(0.68_0.14_32)] font-semibold' 
                               : 'text-[oklch(0.48_0.01_40)] hover:bg-[oklch(0.94_0.008_70)]'
                           }`}
                         >
@@ -232,8 +284,8 @@ export default function SidebarLayout({ children, user }: SidebarLayoutProps) {
                       onClick={() => setMobileMenuOpen(false)}
                       className={`flex items-center gap-3 px-3 py-2.5 rounded-xl font-medium text-sm transition-all ${
                         active 
-                          ? 'bg-[oklch(0.94_0.008_70)] text-[oklch(0.22_0.01_40)] font-semibold' 
-                          : 'text-[oklch(0.48_0.01_40)] hover:bg-[oklch(0.94_0.008_70)]'
+                          ? 'bg-[oklch(0.94_0.008_70)] text-[oklch(0.22_0.01_40)] font-semibold shadow-sm' 
+                          : 'text-[oklch(0.48_0.01_40)] hover:bg-[oklch(0.94_0.008_70)] hover:text-[oklch(0.22_0.01_40)]'
                       }`}
                     >
                       <Icon size={18} />
@@ -246,10 +298,14 @@ export default function SidebarLayout({ children, user }: SidebarLayoutProps) {
 
             <div className="space-y-4 pt-6 border-t border-[oklch(0.90_0.008_70)]">
               {user && (
-                <div className="px-2">
+                <Link 
+                  href="/profile" 
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="px-2 block hover:bg-[oklch(0.94_0.008_70)] py-1 rounded-xl"
+                >
                   <p className="font-semibold text-sm truncate">{user.fullName}</p>
                   <p className="text-xs text-[oklch(0.48_0.01_40)] truncate">@{user.username}</p>
-                </div>
+                </Link>
               )}
               <Button 
                 variant="ghost" 
@@ -278,12 +334,12 @@ export default function SidebarLayout({ children, user }: SidebarLayoutProps) {
               href={item.href}
               className={`flex flex-col items-center justify-center gap-0.5 px-3 py-1 rounded-xl transition-all ${
                 active 
-                  ? 'text-[oklch(0.64_0.22_30)] font-semibold' 
+                  ? 'text-[oklch(0.68_0.14_32)] font-semibold' 
                   : 'text-[oklch(0.48_0.01_40)]'
               }`}
             >
               <Icon size={20} />
-              <span className="text-[10px]">{item.name}</span>
+              <span className="text-[10px]">{item.name.split(' ')[0]}</span>
             </Link>
           );
         })}
@@ -292,7 +348,7 @@ export default function SidebarLayout({ children, user }: SidebarLayoutProps) {
             href={`/trips/${tripId}`}
             className={`flex flex-col items-center justify-center gap-0.5 px-3 py-1 rounded-xl transition-all ${
               pathname.includes(`/trips/${tripId}`) && !pathname.endsWith('/expenses') && !pathname.endsWith('/rundown')
-                ? 'text-[oklch(0.64_0.22_30)] font-semibold' 
+                ? 'text-[oklch(0.68_0.14_32)] font-semibold' 
                 : 'text-[oklch(0.48_0.01_40)]'
             }`}
           >
@@ -305,7 +361,7 @@ export default function SidebarLayout({ children, user }: SidebarLayoutProps) {
             href={`/trips/${tripId}/rundown`}
             className={`flex flex-col items-center justify-center gap-0.5 px-3 py-1 rounded-xl transition-all ${
               pathname.endsWith('/rundown')
-                ? 'text-[oklch(0.64_0.22_30)] font-semibold' 
+                ? 'text-[oklch(0.68_0.14_32)] font-semibold' 
                 : 'text-[oklch(0.48_0.01_40)]'
             }`}
           >
@@ -318,7 +374,7 @@ export default function SidebarLayout({ children, user }: SidebarLayoutProps) {
             href={`/trips/${tripId}/expenses`}
             className={`flex flex-col items-center justify-center gap-0.5 px-3 py-1 rounded-xl transition-all ${
               pathname.endsWith('/expenses')
-                ? 'text-[oklch(0.64_0.22_30)] font-semibold' 
+                ? 'text-[oklch(0.68_0.14_32)] font-semibold' 
                 : 'text-[oklch(0.48_0.01_40)]'
             }`}
           >

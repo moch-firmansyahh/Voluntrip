@@ -58,7 +58,7 @@ export default function LoginPage() {
       </div>
 
       {/* Card Form */}
-      <Card className="w-full max-w-md border-[oklch(0.90_0.008_70)] shadow-xl shadow-orange-50/40 bg-white rounded-3xl overflow-hidden">
+      <Card className="w-full max-w-md border-[oklch(0.90_0.008_70)] shadow-xl shadow-rose-50/40 bg-white rounded-3xl overflow-hidden">
         <CardHeader className="space-y-2 pt-8 pb-6 px-8 bg-gradient-to-br from-orange-50/50 to-transparent">
           <CardTitle className="text-2xl font-bold font-heading text-[oklch(0.22_0.01_40)]">Welcome Back</CardTitle>
           <CardDescription className="text-sm text-[oklch(0.48_0.01_40)]">
@@ -91,7 +91,7 @@ export default function LoginPage() {
                   placeholder="Masukkan username"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  className="pl-10 h-11 rounded-xl border-[oklch(0.90_0.008_70)] focus-visible:ring-[oklch(0.64_0.22_30)] focus-visible:border-[oklch(0.64_0.22_30)] text-sm transition-all"
+                  className="pl-10 h-11 rounded-xl border-[oklch(0.90_0.008_70)] focus-visible:ring-[oklch(0.68_0.14_32)] focus-visible:border-[oklch(0.68_0.14_32)] text-sm transition-all"
                   disabled={loading}
                 />
               </div>
@@ -112,7 +112,7 @@ export default function LoginPage() {
                   placeholder="Masukkan password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10 pr-10 h-11 rounded-xl border-[oklch(0.90_0.008_70)] focus-visible:ring-[oklch(0.64_0.22_30)] focus-visible:border-[oklch(0.64_0.22_30)] text-sm transition-all"
+                  className="pl-10 pr-10 h-11 rounded-xl border-[oklch(0.90_0.008_70)] focus-visible:ring-[oklch(0.68_0.14_32)] focus-visible:border-[oklch(0.68_0.14_32)] text-sm transition-all"
                   disabled={loading}
                 />
                 <button
@@ -130,7 +130,7 @@ export default function LoginPage() {
           <CardFooter className="px-8 pt-4 pb-8 flex flex-col gap-4">
             <Button
               type="submit"
-              className="w-full h-11 rounded-xl bg-[oklch(0.64_0.22_30)] text-white hover:bg-[oklch(0.64_0.22_30)]/90 font-medium text-sm transition-all shadow-md shadow-orange-100"
+              className="w-full h-11 rounded-xl bg-[oklch(0.68_0.14_32)] text-white hover:bg-[oklch(0.68_0.14_32)]/90 font-medium text-sm transition-all shadow-md shadow-rose-100"
               disabled={loading}
             >
               {loading ? (

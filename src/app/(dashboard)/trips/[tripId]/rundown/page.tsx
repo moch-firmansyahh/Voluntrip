@@ -120,10 +120,16 @@ function SortableRow({ activity, onDelete, onEdit }: SortableRowProps) {
       </td>
       <td className="p-3 text-xs text-[oklch(0.22_0.01_40)] align-middle">
         {activity.location ? (
-          <div className="flex items-center gap-1">
-            <MapPin size={12} className="text-orange-500" />
-            <span>{activity.location}</span>
-          </div>
+          <a 
+            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(activity.location)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1 text-teal-600 hover:text-teal-700 hover:underline cursor-pointer"
+            title="Buka di Google Maps"
+          >
+            <MapPin size={12} className="text-orange-500 shrink-0" />
+            <span className="truncate max-w-[150px]">{activity.location}</span>
+          </a>
         ) : (
           <span className="text-[oklch(0.48_0.01_40)] italic">-</span>
         )}
@@ -383,7 +389,7 @@ export default function RundownPage() {
       {/* Header section */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="space-y-1">
-          <Link href={`/trips/${tripId}`} className="flex items-center gap-1.5 text-xs font-semibold text-[oklch(0.48_0.01_40)] hover:text-[oklch(0.64_0.22_30)] transition-colors">
+          <Link href={`/trips/${tripId}`} className="flex items-center gap-1.5 text-xs font-semibold text-[oklch(0.48_0.01_40)] hover:text-[oklch(0.68_0.14_32)] transition-colors">
             <ArrowLeft size={14} /> Back to Overview
           </Link>
           <h2 className="text-2xl font-extrabold font-heading text-[oklch(0.22_0.01_40)] tracking-tight">
@@ -461,7 +467,7 @@ export default function RundownPage() {
                     
                     <Button 
                       onClick={() => openAddModal(day.id)}
-                      className="rounded-xl bg-[oklch(0.64_0.22_30)] text-white hover:bg-[oklch(0.64_0.22_30)]/90 text-xs h-9 px-3 gap-1 shadow-sm shadow-orange-50"
+                      className="rounded-xl bg-[oklch(0.68_0.14_32)] text-white hover:bg-[oklch(0.68_0.14_32)]/90 text-xs h-9 px-3 gap-1 shadow-sm shadow-rose-50"
                     >
                       <Plus size={14} /> Tambah Agenda
                     </Button>
@@ -609,7 +615,7 @@ export default function RundownPage() {
               <Button type="button" variant="ghost" onClick={() => setIsOpen(false)} className="rounded-xl text-xs">
                 Batal
               </Button>
-              <Button type="submit" disabled={formLoading} className="rounded-xl bg-[oklch(0.64_0.22_30)] text-white hover:bg-[oklch(0.64_0.22_30)]/90 text-xs">
+              <Button type="submit" disabled={formLoading} className="rounded-xl bg-[oklch(0.68_0.14_32)] text-white hover:bg-[oklch(0.68_0.14_32)]/90 text-xs">
                 {formLoading ? <Loader2 className="animate-spin mr-1.5" size={14} /> : null}
                 {editingActivity ? 'Simpan Perubahan' : 'Tambah Agenda'}
               </Button>

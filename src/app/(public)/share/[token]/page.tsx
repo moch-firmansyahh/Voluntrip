@@ -144,7 +144,7 @@ export default function PublicSharePage() {
           <div className="flex items-center gap-3">
             <img src="/images/Logo_voluntrip.png" alt="Voluntrip Logo" className="h-8 w-auto object-contain" />
           </div>
-          <span className="text-[10px] font-bold bg-orange-50 text-[oklch(0.64_0.22_30)] px-3 py-1 rounded-full uppercase tracking-wider">
+          <span className="text-[10px] font-bold bg-[oklch(0.97_0.015_32)] text-[oklch(0.68_0.14_32)] px-3 py-1 rounded-full uppercase tracking-wider">
             Shared Plan View
           </span>
         </div>
@@ -191,10 +191,10 @@ export default function PublicSharePage() {
         {/* Public View Tabs */}
         <Tabs defaultValue="rundown" className="space-y-6">
           <TabsList className="grid w-full grid-cols-2 rounded-2xl bg-white border border-[oklch(0.90_0.008_70)] p-1 h-12 shadow-sm max-w-md mx-auto">
-            <TabsTrigger value="rundown" className="rounded-xl text-xs font-semibold data-[state=active]:bg-[oklch(0.96_0.02_30)] data-[state=active]:text-[oklch(0.64_0.22_30)] transition-all">
+            <TabsTrigger value="rundown" className="rounded-xl text-xs font-semibold data-[state=active]:bg-[oklch(0.97_0.015_32)] data-[state=active]:text-[oklch(0.68_0.14_32)] transition-all">
               Itinerary
             </TabsTrigger>
-            <TabsTrigger value="budget" className="rounded-xl text-xs font-semibold data-[state=active]:bg-[oklch(0.96_0.02_30)] data-[state=active]:text-[oklch(0.64_0.22_30)] transition-all">
+            <TabsTrigger value="budget" className="rounded-xl text-xs font-semibold data-[state=active]:bg-[oklch(0.97_0.015_32)] data-[state=active]:text-[oklch(0.68_0.14_32)] transition-all">
               Budget & Expenses
             </TabsTrigger>
           </TabsList>
@@ -258,10 +258,16 @@ export default function PublicSharePage() {
                                   </td>
                                   <td className="p-3 text-xs text-[oklch(0.22_0.01_40)] align-middle">
                                     {activity.location ? (
-                                      <div className="flex items-center gap-1">
-                                        <MapPin size={12} className="text-orange-500" />
-                                        <span>{activity.location}</span>
-                                      </div>
+                                      <a 
+                                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(activity.location)}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex items-center gap-1 text-teal-600 hover:text-teal-700 hover:underline cursor-pointer"
+                                        title="Buka di Google Maps"
+                                      >
+                                        <MapPin size={12} className="text-orange-500 shrink-0" />
+                                        <span className="truncate max-w-[150px]">{activity.location}</span>
+                                      </a>
                                     ) : (
                                       <span className="text-[oklch(0.48_0.01_40)] italic">-</span>
                                     )}
@@ -304,7 +310,7 @@ export default function PublicSharePage() {
               <div className="w-full h-3 bg-[oklch(0.94_0.008_70)] rounded-full overflow-hidden">
                 <div 
                   className={`h-full rounded-full transition-all duration-500 ${
-                    budgetPercentage > 90 ? 'bg-red-500' : 'bg-[oklch(0.64_0.22_30)]'
+                    budgetPercentage > 90 ? 'bg-red-500' : 'bg-[oklch(0.68_0.14_32)]'
                   }`} 
                   style={{ width: `${budgetPercentage}%` }}
                 />
@@ -324,7 +330,7 @@ export default function PublicSharePage() {
               <div className="md:col-span-2 space-y-6">
                 <Card className="rounded-3xl border-[oklch(0.90_0.008_70)] shadow-sm bg-white p-6 flex flex-col justify-between h-80">
                   <CardTitle className="text-xs font-bold flex items-center gap-1.5 pb-2">
-                    <PieChart size={16} className="text-[oklch(0.64_0.22_30)]" /> Kategori Pengeluaran
+                    <PieChart size={16} className="text-[oklch(0.68_0.14_32)]" /> Kategori Pengeluaran
                   </CardTitle>
                   {chartData.length === 0 ? (
                     <div className="flex-1 flex items-center justify-center text-xs text-[oklch(0.48_0.01_40)]">
@@ -380,7 +386,7 @@ export default function PublicSharePage() {
                               <span className="font-extrabold text-sm text-[oklch(0.22_0.01_40)]">
                                 {formatIDR(expense.amount)}
                               </span>
-                              <span className="bg-orange-50 text-[oklch(0.64_0.22_30)] font-bold text-[9px] px-2 py-0.5 rounded-full uppercase tracking-wider">
+                              <span className="bg-[oklch(0.97_0.015_32)] text-[oklch(0.68_0.14_32)] font-bold text-[9px] px-2 py-0.5 rounded-full uppercase tracking-wider">
                                 {expense.category_name || 'Lainnya'}
                               </span>
                             </div>
@@ -398,7 +404,7 @@ export default function PublicSharePage() {
                                   Splits:
                                 </span>
                                 {expense.participants.map((p: any) => (
-                                  <span key={p.id} className="text-[9px] bg-teal-50 text-[oklch(0.58_0.16_185)] font-semibold px-2 py-0.5 rounded-md">
+                                  <span key={p.id} className="text-[9px] bg-teal-50 text-[oklch(0.32_0.08_215)] font-semibold px-2 py-0.5 rounded-md">
                                     {p.participant_name} ({formatIDR(p.share_amount)})
                                   </span>
                                 ))}
@@ -417,7 +423,7 @@ export default function PublicSharePage() {
                 {trip.expense_mode === 'split' ? (
                   <Card className="rounded-3xl border-[oklch(0.90_0.008_70)] shadow-sm bg-white p-6 flex flex-col h-80 overflow-hidden">
                     <CardTitle className="text-xs font-bold flex items-center gap-1.5 pb-2 shrink-0">
-                      <Users size={16} className="text-[oklch(0.58_0.16_185)]" /> Ringkasan Split Bill
+                      <Users size={16} className="text-[oklch(0.32_0.08_215)]" /> Ringkasan Split Bill
                     </CardTitle>
                     <p className="text-[10px] text-[oklch(0.48_0.01_40)] pb-4 shrink-0">
                       Tagihan peserta kepada pembuat trip.
@@ -435,7 +441,7 @@ export default function PublicSharePage() {
                               <span className="text-[8px] uppercase tracking-wider text-[oklch(0.48_0.01_40)] block">
                                 Harus Dibayar
                               </span>
-                              <span className="font-extrabold text-xs text-[oklch(0.58_0.16_185)]">
+                              <span className="font-extrabold text-xs text-[oklch(0.32_0.08_215)]">
                                 {formatIDR(splitBalances[name])}
                               </span>
                             </div>
@@ -447,7 +453,7 @@ export default function PublicSharePage() {
                 ) : (
                   <Card className="rounded-3xl border-[oklch(0.90_0.008_70)] shadow-sm bg-white p-6 space-y-3">
                     <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-lg bg-orange-50 flex items-center justify-center text-[oklch(0.64_0.22_30)]">
+                      <div className="w-8 h-8 rounded-lg bg-[oklch(0.97_0.015_32)] flex items-center justify-center text-[oklch(0.68_0.14_32)]">
                         <Briefcase size={16} />
                       </div>
                       <h4 className="font-bold text-xs">Personal Mode</h4>

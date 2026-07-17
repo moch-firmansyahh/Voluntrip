@@ -87,7 +87,7 @@ export default async function DashboardPage() {
           </p>
         </div>
         <Link href="/trips">
-          <Button className="rounded-xl bg-[oklch(0.64_0.22_30)] text-white hover:bg-[oklch(0.64_0.22_30)]/90 gap-2 shadow-md shadow-orange-100">
+          <Button className="rounded-xl bg-[oklch(0.68_0.14_32)] text-white hover:bg-[oklch(0.68_0.14_32)]/90 gap-2 shadow-md shadow-rose-100">
             <Plus size={18} />
             Buat Trip Baru
           </Button>
@@ -103,7 +103,7 @@ export default async function DashboardPage() {
               <span className="text-xs font-bold uppercase tracking-wider text-[oklch(0.48_0.01_40)]">Total Perjalanan</span>
               <p className="text-3xl font-extrabold font-heading text-[oklch(0.22_0.01_40)]">{totalTrips}</p>
             </div>
-            <div className="w-12 h-12 rounded-2xl bg-orange-50 flex items-center justify-center text-[oklch(0.64_0.22_30)]">
+            <div className="w-12 h-12 rounded-2xl bg-[oklch(0.97_0.015_32)] flex items-center justify-center text-[oklch(0.68_0.14_32)]">
               <Layers size={22} />
             </div>
           </CardContent>
@@ -116,7 +116,7 @@ export default async function DashboardPage() {
               <span className="text-xs font-bold uppercase tracking-wider text-[oklch(0.48_0.01_40)]">Pengeluaran Bulan Ini</span>
               <p className="text-2xl font-extrabold font-heading text-[oklch(0.22_0.01_40)]">{formatIDR(thisMonthExpenses)}</p>
             </div>
-            <div className="w-12 h-12 rounded-2xl bg-teal-50 flex items-center justify-center text-[oklch(0.58_0.16_185)]">
+            <div className="w-12 h-12 rounded-2xl bg-teal-50 flex items-center justify-center text-[oklch(0.32_0.08_215)]">
               <TrendingUp size={22} />
             </div>
           </CardContent>
@@ -152,7 +152,7 @@ export default async function DashboardPage() {
         <div className="lg:col-span-2 space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-bold font-heading">Trip Terbaru</h3>
-            <Link href="/trips" className="text-xs font-semibold text-[oklch(0.64_0.22_30)] flex items-center gap-1 hover:underline">
+            <Link href="/trips" className="text-xs font-semibold text-[oklch(0.68_0.14_32)] flex items-center gap-1 hover:underline">
               Lihat semua <ArrowRight size={14} />
             </Link>
           </div>
@@ -179,12 +179,12 @@ export default async function DashboardPage() {
                             className="w-14 h-14 rounded-2xl object-cover" 
                           />
                         ) : (
-                          <div className="w-14 h-14 rounded-2xl bg-orange-50/50 text-[oklch(0.64_0.22_30)] flex items-center justify-center font-bold text-lg">
+                          <div className="w-14 h-14 rounded-2xl bg-[oklch(0.97_0.015_32)]/50 text-[oklch(0.68_0.14_32)] flex items-center justify-center font-bold text-lg">
                             🏝️
                           </div>
                         )}
                         <div className="space-y-1">
-                          <h4 className="font-bold text-base text-[oklch(0.22_0.01_40)] group-hover:text-[oklch(0.64_0.22_30)] transition-colors">
+                          <h4 className="font-bold text-base text-[oklch(0.22_0.01_40)] group-hover:text-[oklch(0.68_0.14_32)] transition-colors">
                             {trip.name}
                           </h4>
                           <p className="text-xs text-[oklch(0.48_0.01_40)] flex items-center gap-1 font-medium">
@@ -205,7 +205,7 @@ export default async function DashboardPage() {
                             {formatIDR(parseFloat(trip.budget_total))}
                           </span>
                         </div>
-                        <div className="px-3 py-1 rounded-full text-[10px] font-bold bg-orange-50 text-[oklch(0.64_0.22_30)] capitalize">
+                        <div className="px-3 py-1 rounded-full text-[10px] font-bold bg-[oklch(0.97_0.015_32)] text-[oklch(0.68_0.14_32)] capitalize">
                           {trip.expense_mode === 'split' ? 'Split Bill' : 'Per Trip'}
                         </div>
                       </div>
@@ -226,11 +226,11 @@ export default async function DashboardPage() {
             </CardHeader>
             <CardContent className="space-y-4 text-xs text-[oklch(0.48_0.01_40)] leading-relaxed">
               <div className="flex items-start gap-2">
-                <span className="w-5 h-5 rounded-full bg-orange-50 text-[oklch(0.64_0.22_30)] flex items-center justify-center font-bold text-[10px] shrink-0 mt-0.5">1</span>
+                <span className="w-5 h-5 rounded-full bg-[oklch(0.97_0.015_32)] text-[oklch(0.68_0.14_32)] flex items-center justify-center font-bold text-[10px] shrink-0 mt-0.5">1</span>
                 <p>Buat trip baru dengan tujuan dan budget keseluruhan trip.</p>
               </div>
               <div className="flex items-start gap-2">
-                <span className="w-5 h-5 rounded-full bg-teal-50 text-[oklch(0.58_0.16_185)] flex items-center justify-center font-bold text-[10px] shrink-0 mt-0.5">2</span>
+                <span className="w-5 h-5 rounded-full bg-teal-50 text-[oklch(0.32_0.08_215)] flex items-center justify-center font-bold text-[10px] shrink-0 mt-0.5">2</span>
                 <p>Susun rundown kegiatan harian secara terstruktur agar perjalanan terarah.</p>
               </div>
               <div className="flex items-start gap-2">
