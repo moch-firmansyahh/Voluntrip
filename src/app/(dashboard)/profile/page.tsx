@@ -12,7 +12,8 @@ import {
   CheckCircle2, 
   AlertCircle,
   Mail,
-  Link as LinkIcon
+  Link as LinkIcon,
+  Edit2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -28,6 +29,10 @@ const PRESETS = [
 
 export default function ProfilePage() {
   const router = useRouter();
+
+  // Mode state
+  const [isEditing, setIsEditing] = useState(false);
+  const [originalData, setOriginalData] = useState<any>(null);
 
   // User details states
   const [fullName, setFullName] = useState('');
@@ -55,6 +60,7 @@ export default function ProfilePage() {
         const profileRes = await fetch('/api/profile');
         if (profileRes.ok) {
           const profileData = await profileRes.json();
+          setOriginalData(profileData);
           setFullName(profileData.fullName || '');
           setUsername(profileData.username || '');
           setEmail(profileData.email || '');
@@ -85,6 +91,31 @@ export default function ProfilePage() {
 
     fetchProfileData();
   }, []);
+
+  const handleCancel = () => {
+    if (originalData) {
+      setFullName(originalData.fullName || '');
+      setUsername(originalData.username || '');
+      setEmail(originalData.email || '');
+      
+      const avatar = originalData.avatarUrl || '';
+      const matchesPreset = PRESETS.some(p => p.url === avatar);
+      if (matchesPreset) {
+        setSelectedAvatar(avatar);
+        setCustomAvatar('');
+      } else if (avatar) {
+        setCustomAvatar(avatar);
+      } else {
+        setSelectedAvatar(PRESETS[0].url);
+      }
+    }
+    setOldPassword('');
+    setNewPassword('');
+    setConfirmPassword('');
+    setIsEditing(false);
+    setErrorMsg(null);
+    setSuccessMsg(null);
+  };
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -117,10 +148,20 @@ export default function ProfilePage() {
         throw new Error(data.error || 'Gagal memperbarui profil');
       }
 
+      setOriginalData({
+        fullName,
+        username,
+        email,
+        avatarUrl: finalAvatar,
+        tripsCreated: stats.tripsCreated,
+        expensesCreated: stats.expensesCreated
+      });
+
       setSuccessMsg('Profil berhasil diperbarui!');
       setOldPassword('');
       setNewPassword('');
       setConfirmPassword('');
+      setIsEditing(false);
       
       // Refresh router and layout context
       router.refresh();
@@ -194,11 +235,23 @@ export default function ProfilePage() {
         {/* Profile Editing Form */}
         <div className="md:col-span-2">
           <Card className="rounded-3xl border-[oklch(0.90_0.008_70)] shadow-sm bg-white p-6">
-            <CardHeader className="p-0 pb-6 border-b border-[oklch(0.90_0.008_70)]/60">
-              <CardTitle className="font-heading text-lg font-bold text-[oklch(0.22_0.01_40)]">Informasi Akun</CardTitle>
-              <CardDescription className="text-xs text-[oklch(0.48_0.01_40)]">
-                Perbarui nama, email, foto profil, dan kata sandi Anda.
-              </CardDescription>
+            <CardHeader className="p-0 pb-6 border-b border-[oklch(0.90_0.008_70)]/60 flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="font-heading text-lg font-bold text-[oklch(0.22_0.01_40)]">Informasi Akun</CardTitle>
+                <CardDescription className="text-xs text-[oklch(0.48_0.01_40)]">
+                  Perbarui nama, email, foto profil, dan kata sandi Anda.
+                </CardDescription>
+              </div>
+              {!isEditing && (
+                <Button
+                  type="button"
+                  onClick={() => setIsEditing(true)}
+                  className="rounded-xl bg-[oklch(0.38_0.06_210)] hover:bg-[oklch(0.38_0.06_210)]/90 text-white font-bold text-xs gap-1.5 h-9 px-3"
+                >
+                  <Edit2 size={13} />
+                  Edit
+                </Button>
+              )}
             </CardHeader>
 
             <CardContent className="p-0 pt-6">
@@ -227,9 +280,10 @@ export default function ProfilePage() {
                       <Input
                         id="email"
                         type="email"
+                        disabled={!isEditing}
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        className="pl-9 rounded-xl border-[oklch(0.90_0.008_70)] text-xs h-10 focus-visible:ring-[oklch(0.70_0.08_40)] focus-visible:border-[oklch(0.70_0.08_40)]"
+                        className={`pl-9 rounded-xl border-[oklch(0.90_0.008_70)] text-xs h-10 focus-visible:ring-[oklch(0.70_0.08_40)] focus-visible:border-[oklch(0.70_0.08_40)] ${!isEditing ? 'bg-[oklch(0.98_0.006_70)] cursor-not-allowed opacity-80' : ''}`}
                         required
                       />
                     </div>
@@ -244,9 +298,10 @@ export default function ProfilePage() {
                         </span>
                         <Input
                           id="fullName"
+                          disabled={!isEditing}
                           value={fullName}
                           onChange={(e) => setFullName(e.target.value)}
-                          className="pl-9 rounded-xl border-[oklch(0.90_0.008_70)] text-xs h-10 focus-visible:ring-[oklch(0.70_0.08_40)] focus-visible:border-[oklch(0.70_0.08_40)]"
+                          className={`pl-9 rounded-xl border-[oklch(0.90_0.008_70)] text-xs h-10 focus-visible:ring-[oklch(0.70_0.08_40)] focus-visible:border-[oklch(0.70_0.08_40)] ${!isEditing ? 'bg-[oklch(0.98_0.006_70)] cursor-not-allowed opacity-80' : ''}`}
                           required
                         />
                       </div>
@@ -258,9 +313,10 @@ export default function ProfilePage() {
                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-[oklch(0.48_0.01_40)] font-bold">@</span>
                         <Input
                           id="username"
+                          disabled={!isEditing}
                           value={username}
                           onChange={(e) => setUsername(e.target.value)}
-                          className="pl-8 rounded-xl border-[oklch(0.90_0.008_70)] text-xs h-10 focus-visible:ring-[oklch(0.70_0.08_40)] focus-visible:border-[oklch(0.70_0.08_40)]"
+                          className={`pl-8 rounded-xl border-[oklch(0.90_0.008_70)] text-xs h-10 focus-visible:ring-[oklch(0.70_0.08_40)] focus-visible:border-[oklch(0.70_0.08_40)] ${!isEditing ? 'bg-[oklch(0.98_0.006_70)] cursor-not-allowed opacity-80' : ''}`}
                           required
                         />
                       </div>
@@ -278,13 +334,14 @@ export default function ProfilePage() {
                         <button
                           key={preset.name}
                           type="button"
+                          disabled={!isEditing}
                           onClick={() => {
                             setSelectedAvatar(preset.url);
                             setCustomAvatar('');
                           }}
-                          className={`w-12 h-12 rounded-full overflow-hidden border-2 bg-gradient-to-tr from-amber-50 to-orange-100 p-0.5 transition-all cursor-pointer ${
+                          className={`w-12 h-12 rounded-full overflow-hidden border-2 bg-gradient-to-tr from-amber-50 to-orange-100 p-0.5 transition-all ${
                             isSelected ? 'border-[oklch(0.38_0.06_210)] scale-110 shadow' : 'border-transparent opacity-70 hover:opacity-100'
-                          }`}
+                          } ${!isEditing ? 'cursor-not-allowed opacity-55' : 'cursor-pointer'}`}
                           title={preset.name}
                         >
                           <img src={preset.url} alt={preset.name} className="w-full h-full object-cover" />
@@ -301,10 +358,11 @@ export default function ProfilePage() {
                       </span>
                       <Input 
                         id="custom-avatar"
+                        disabled={!isEditing}
                         placeholder="https://example.com/avatar.jpg"
                         value={customAvatar}
                         onChange={(e) => setCustomAvatar(e.target.value)}
-                        className="pl-9 h-9 rounded-xl text-xs border-[oklch(0.90_0.008_70)]"
+                        className={`pl-9 h-9 rounded-xl text-xs border-[oklch(0.90_0.008_70)] ${!isEditing ? 'bg-[oklch(0.98_0.006_70)] cursor-not-allowed opacity-80' : ''}`}
                       />
                     </div>
                   </div>
@@ -323,10 +381,11 @@ export default function ProfilePage() {
                       <Input
                         id="oldPassword"
                         type="password"
+                        disabled={!isEditing}
                         placeholder="••••••"
                         value={oldPassword}
                         onChange={(e) => setOldPassword(e.target.value)}
-                        className="pl-9 rounded-xl border-[oklch(0.90_0.008_70)] text-xs h-10 focus-visible:ring-[oklch(0.70_0.08_40)] focus-visible:border-[oklch(0.70_0.08_40)]"
+                        className={`pl-9 rounded-xl border-[oklch(0.90_0.008_70)] text-xs h-10 focus-visible:ring-[oklch(0.70_0.08_40)] focus-visible:border-[oklch(0.70_0.08_40)] ${!isEditing ? 'bg-[oklch(0.98_0.006_70)] cursor-not-allowed opacity-80' : ''}`}
                       />
                     </div>
                   </div>
@@ -341,10 +400,11 @@ export default function ProfilePage() {
                         <Input
                           id="newPassword"
                           type="password"
+                          disabled={!isEditing}
                           placeholder="Minimal 6 karakter"
                           value={newPassword}
                           onChange={(e) => setNewPassword(e.target.value)}
-                          className="pl-9 rounded-xl border-[oklch(0.90_0.008_70)] text-xs h-10 focus-visible:ring-[oklch(0.70_0.08_40)] focus-visible:border-[oklch(0.70_0.08_40)]"
+                          className={`pl-9 rounded-xl border-[oklch(0.90_0.008_70)] text-xs h-10 focus-visible:ring-[oklch(0.70_0.08_40)] focus-visible:border-[oklch(0.70_0.08_40)] ${!isEditing ? 'bg-[oklch(0.98_0.006_70)] cursor-not-allowed opacity-80' : ''}`}
                         />
                       </div>
                     </div>
@@ -358,25 +418,48 @@ export default function ProfilePage() {
                         <Input
                           id="confirmPassword"
                           type="password"
+                          disabled={!isEditing}
                           placeholder="Ulangi password baru"
                           value={confirmPassword}
                           onChange={(e) => setConfirmPassword(e.target.value)}
-                          className="pl-9 rounded-xl border-[oklch(0.90_0.008_70)] text-xs h-10 focus-visible:ring-[oklch(0.70_0.08_40)] focus-visible:border-[oklch(0.70_0.08_40)]"
+                          className={`pl-9 rounded-xl border-[oklch(0.90_0.008_70)] text-xs h-10 focus-visible:ring-[oklch(0.70_0.08_40)] focus-visible:border-[oklch(0.70_0.08_40)] ${!isEditing ? 'bg-[oklch(0.98_0.006_70)] cursor-not-allowed opacity-80' : ''}`}
                         />
                       </div>
                     </div>
                   </div>
                 </div>
 
-                <div className="flex justify-end pt-4">
-                  <Button 
-                    type="submit" 
-                    disabled={saveLoading}
-                    className="rounded-xl bg-[oklch(0.70_0.08_40)] hover:bg-[oklch(0.70_0.08_40)]/90 text-white font-bold text-xs gap-1.5 px-4 h-10 shadow"
-                  >
-                    {saveLoading ? <Loader2 className="animate-spin" size={14} /> : <Save size={14} />}
-                    Simpan Perubahan
-                  </Button>
+                <div className="flex justify-end gap-3 pt-4 border-t border-[oklch(0.90_0.008_70)]/60">
+                  {isEditing ? (
+                    <>
+                      <Button 
+                        type="button" 
+                        variant="outline"
+                        onClick={handleCancel}
+                        disabled={saveLoading}
+                        className="rounded-xl border-[oklch(0.90_0.008_70)] text-[oklch(0.22_0.01_40)] hover:bg-[oklch(0.94_0.008_70)] font-bold text-xs px-5 h-10 cursor-pointer"
+                      >
+                        Batal
+                      </Button>
+                      <Button 
+                        type="submit" 
+                        disabled={saveLoading}
+                        className="rounded-xl bg-[oklch(0.70_0.08_40)] hover:bg-[oklch(0.70_0.08_40)]/90 text-white font-bold text-xs gap-1.5 px-5 h-10 shadow cursor-pointer"
+                      >
+                        {saveLoading ? <Loader2 className="animate-spin" size={14} /> : <Save size={14} />}
+                        Simpan Perubahan
+                      </Button>
+                    </>
+                  ) : (
+                    <Button 
+                      type="button" 
+                      onClick={() => setIsEditing(true)}
+                      className="rounded-xl bg-[oklch(0.38_0.06_210)] hover:bg-[oklch(0.38_0.06_210)]/90 text-white font-bold text-xs px-6 h-10 shadow-sm cursor-pointer"
+                    >
+                      <Edit2 size={13} className="mr-1.5" />
+                      Edit Profil
+                    </Button>
+                  )}
                 </div>
               </form>
             </CardContent>
