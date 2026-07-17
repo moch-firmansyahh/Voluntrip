@@ -266,9 +266,9 @@ export default function PublicSharePage() {
               
               return (
                 <Card key={day.id} className="rounded-3xl border-[oklch(0.90_0.008_70)] shadow-sm bg-white overflow-hidden animate-fade-in">
-                  <CardHeader className="pb-3 px-6 pt-6 flex flex-row items-center justify-between bg-gradient-to-r from-orange-50/20 to-transparent border-b border-[oklch(0.90_0.008_70)]/60">
-                    <div className="space-y-0.5">
-                      <CardTitle className="font-heading text-sm font-extrabold">
+                  <CardHeader className="pb-4 px-6 pt-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gradient-to-r from-orange-50/10 to-transparent border-b border-[oklch(0.90_0.008_70)]/60">
+                    <div className="space-y-1">
+                      <CardTitle className="font-heading text-sm font-extrabold text-[oklch(0.22_0.01_40)]">
                         Hari {idx + 1}
                       </CardTitle>
                       <CardDescription className="text-[10px] font-bold text-[oklch(0.48_0.01_40)] uppercase tracking-wider">
@@ -276,7 +276,7 @@ export default function PublicSharePage() {
                       </CardDescription>
                     </div>
 
-                    <div className="text-right">
+                    <div className="text-left sm:text-right pt-2 sm:pt-0 border-t sm:border-t-0 border-[oklch(0.90_0.008_70)]/40 w-full sm:w-auto">
                       <span className="text-[9px] uppercase tracking-wider text-[oklch(0.48_0.01_40)] block">
                         Total Hari Ini
                       </span>
@@ -286,64 +286,61 @@ export default function PublicSharePage() {
                     </div>
                   </CardHeader>
 
-                  <CardContent className="p-0">
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-left border-collapse min-w-[650px]">
-                        <thead>
-                          <tr className="bg-[oklch(0.98_0.006_70)]/50 border-b border-[oklch(0.90_0.008_70)] text-[10px] font-bold text-[oklch(0.48_0.01_40)] uppercase tracking-wider">
-                            <th className="p-3 pl-6">Waktu (Jam)</th>
-                            <th className="p-3">Agenda / Kegiatan</th>
-                            <th className="p-3">Lokasi</th>
-                            <th className="p-3">Estimasi Biaya</th>
-                            <th className="p-3 pr-6">Catatan</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {day.activities && day.activities.length > 0 ? (
-                            day.activities.map((activity: any) => (
-                              <tr key={activity.id} className="border-b border-[oklch(0.90_0.008_70)] hover:bg-[oklch(0.98_0.006_70)]/30 transition-colors">
-                                <td className="p-3 pl-6 text-xs font-semibold text-[oklch(0.22_0.01_40)] align-middle whitespace-nowrap">
-                                  <div className="flex items-center gap-1.5">
-                                    <Clock size={12} className="text-[oklch(0.48_0.01_40)]" />
+                  <CardContent className="p-6">
+                    <div className="space-y-3">
+                      {day.activities && day.activities.length > 0 ? (
+                        day.activities.map((activity: any) => (
+                          <div 
+                            key={activity.id} 
+                            className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 border border-[oklch(0.90_0.008_70)]/60 rounded-2xl hover:shadow-sm transition-all bg-white"
+                          >
+                            <div className="flex items-start sm:items-center gap-3 min-w-0 flex-1">
+                              {/* Time and Title info */}
+                              <div className="space-y-1 min-w-0 flex-1">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-[oklch(0.92_0.008_240)] text-[oklch(0.38_0.06_210)]">
+                                    <Clock size={11} />
                                     {activity.start_time.substring(0, 5)} - {activity.end_time.substring(0, 5)}
-                                  </div>
-                                </td>
-                                <td className="p-3 text-xs font-bold text-[oklch(0.22_0.01_40)] align-middle">
+                                  </span>
+                                  {parseFloat(activity.cost) > 0 && (
+                                    <span className="inline-flex items-center gap-0.5 text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-teal-50 text-teal-600">
+                                      <DollarSign size={10} />
+                                      {formatIDR(parseFloat(activity.cost || 0))}
+                                    </span>
+                                  )}
+                                </div>
+                                <h5 className="font-bold text-xs text-[oklch(0.22_0.01_40)] mt-1">
                                   {activity.title}
-                                </td>
-                                <td className="p-3 text-xs text-[oklch(0.22_0.01_40)] align-middle">
-                                  {activity.location ? (
+                                </h5>
+                                
+                                {/* Metadata: Location & Notes */}
+                                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 pt-0.5">
+                                  {activity.location && (
                                     <a 
                                       href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(activity.location)}`}
                                       target="_blank"
                                       rel="noopener noreferrer"
-                                      className="flex items-center gap-1 text-teal-600 hover:text-teal-700 hover:underline cursor-pointer"
-                                      title="Buka di Google Maps"
+                                      className="inline-flex items-center gap-1 text-[10px] text-teal-600 hover:text-teal-700 hover:underline font-medium cursor-pointer"
                                     >
-                                      <MapPin size={12} className="text-orange-500 shrink-0" />
-                                      <span className="truncate max-w-[150px]">{activity.location}</span>
+                                      <MapPin size={11} className="text-orange-500 shrink-0" />
+                                      <span className="truncate max-w-[200px] font-semibold">{activity.location}</span>
                                     </a>
-                                  ) : (
-                                    <span className="text-[oklch(0.48_0.01_40)] italic">-</span>
                                   )}
-                                </td>
-                                <td className="p-3 text-xs font-extrabold text-teal-600 align-middle">
-                                  {formatIDR(parseFloat(activity.cost || 0))}
-                                </td>
-                                <td className="p-3 pr-6 text-[11px] text-[oklch(0.48_0.01_40)] italic align-middle max-w-xs truncate">
-                                  {activity.note || '-'}
-                                </td>
-                              </tr>
-                            ))
-                          ) : (
-                            <tr>
-                              <td colSpan={5} className="p-8 text-center text-xs text-[oklch(0.48_0.01_40)]">
-                                Belum ada agenda kegiatan untuk hari ini.
-                              </td>
-                            </tr>
-                          )}
-                        </tbody>
-                      </table>
+                                  {activity.note && (
+                                    <span className="text-[10px] text-[oklch(0.48_0.01_40)] italic">
+                                      {activity.note}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="p-8 text-center text-xs text-[oklch(0.48_0.01_40)] bg-[oklch(0.98_0.006_70)]/30 rounded-2xl border border-dashed border-[oklch(0.90_0.008_70)]/60">
+                          Belum ada agenda kegiatan untuk hari ini.
+                        </div>
+                      )}
                     </div>
                   </CardContent>
                 </Card>

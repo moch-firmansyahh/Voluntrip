@@ -69,14 +69,14 @@ function formatDayDate(dateStr: string) {
   });
 }
 
-// SORTABLE TABLE ROW
+// SORTABLE TIMELINE CARD
 interface SortableRowProps {
   activity: RundownActivity;
   onDelete: (id: string) => void;
   onEdit: (activity: RundownActivity) => void;
 }
 
-function SortableRow({ activity, onDelete, onEdit }: SortableRowProps) {
+function SortableActivityCard({ activity, onDelete, onEdit }: SortableRowProps) {
   const {
     attributes,
     listeners,
@@ -94,73 +94,82 @@ function SortableRow({ activity, onDelete, onEdit }: SortableRowProps) {
   };
 
   return (
-    <tr 
+    <div 
       ref={setNodeRef} 
       style={style} 
-      className="border-b border-[oklch(0.90_0.008_70)] hover:bg-[oklch(0.98_0.006_70)]/40 transition-colors"
+      className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 border border-[oklch(0.90_0.008_70)]/60 rounded-2xl hover:shadow-sm transition-all bg-white animate-fade-in"
     >
-      <td className="p-3 text-center align-middle shrink-0 w-8">
+      <div className="flex items-start sm:items-center gap-3 min-w-0 flex-1">
+        {/* Drag Handle */}
         <button 
           type="button" 
           {...attributes} 
           {...listeners} 
-          className="cursor-grab text-[oklch(0.48_0.01_40)] hover:text-[oklch(0.22_0.01_40)] p-1 rounded hover:bg-[oklch(0.94_0.008_70)] outline-none"
+          className="cursor-grab text-[oklch(0.48_0.01_40)] hover:text-[oklch(0.22_0.01_40)] p-1.5 rounded hover:bg-[oklch(0.94_0.008_70)] outline-none mt-0.5 sm:mt-0"
         >
-          <GripVertical size={14} />
+          <GripVertical size={16} />
         </button>
-      </td>
-      <td className="p-3 text-xs font-semibold text-[oklch(0.22_0.01_40)] align-middle whitespace-nowrap">
-        <div className="flex items-center gap-1.5">
-          <Clock size={12} className="text-[oklch(0.48_0.01_40)]" />
-          {activity.start_time.substring(0, 5)} - {activity.end_time.substring(0, 5)}
+
+        {/* Time and Title info */}
+        <div className="space-y-1 min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-[oklch(0.92_0.008_240)] text-[oklch(0.38_0.06_210)]">
+              <Clock size={11} />
+              {activity.start_time.substring(0, 5)} - {activity.end_time.substring(0, 5)}
+            </span>
+            {activity.cost > 0 && (
+              <span className="inline-flex items-center gap-0.5 text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-teal-50 text-teal-600">
+                <DollarSign size={10} />
+                {formatIDR(parseFloat(activity.cost as any || 0))}
+              </span>
+            )}
+          </div>
+          <h5 className="font-bold text-xs text-[oklch(0.22_0.01_40)] mt-1">
+            {activity.title}
+          </h5>
+          
+          {/* Metadata: Location & Notes */}
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 pt-0.5">
+            {activity.location && (
+              <a 
+                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(activity.location)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-[10px] text-teal-600 hover:text-teal-700 hover:underline font-medium cursor-pointer"
+              >
+                <MapPin size={11} className="text-orange-500 shrink-0" />
+                <span className="truncate max-w-[200px]">{activity.location}</span>
+              </a>
+            )}
+            {activity.note && (
+              <span className="text-[10px] text-[oklch(0.48_0.01_40)] italic">
+                {activity.note}
+              </span>
+            )}
+          </div>
         </div>
-      </td>
-      <td className="p-3 text-xs font-bold text-[oklch(0.22_0.01_40)] align-middle">
-        {activity.title}
-      </td>
-      <td className="p-3 text-xs text-[oklch(0.22_0.01_40)] align-middle">
-        {activity.location ? (
-          <a 
-            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(activity.location)}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1 text-teal-600 hover:text-teal-700 hover:underline cursor-pointer"
-            title="Buka di Google Maps"
-          >
-            <MapPin size={12} className="text-orange-500 shrink-0" />
-            <span className="truncate max-w-[150px]">{activity.location}</span>
-          </a>
-        ) : (
-          <span className="text-[oklch(0.48_0.01_40)] italic">-</span>
-        )}
-      </td>
-      <td className="p-3 text-xs font-extrabold text-teal-600 align-middle">
-        {formatIDR(parseFloat(activity.cost as any || 0))}
-      </td>
-      <td className="p-3 text-[11px] text-[oklch(0.48_0.01_40)] italic align-middle max-w-xs truncate">
-        {activity.note || '-'}
-      </td>
-      <td className="p-3 text-center align-middle whitespace-nowrap shrink-0">
-        <div className="flex items-center justify-center gap-1">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={() => onEdit(activity)}
-            className="text-[oklch(0.48_0.01_40)] hover:text-[oklch(0.22_0.01_40)] h-7 w-7 rounded-lg"
-          >
-            <Edit2 size={13} />
-          </Button>
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={() => onDelete(activity.id)}
-            className="text-red-500 hover:text-red-600 hover:bg-red-50 h-7 w-7 rounded-lg"
-          >
-            <Trash2 size={13} />
-          </Button>
-        </div>
-      </td>
-    </tr>
+      </div>
+
+      {/* Action Buttons */}
+      <div className="flex items-center justify-end gap-1.5 border-t sm:border-t-0 pt-2 sm:pt-0 border-[oklch(0.90_0.008_70)]/30 shrink-0">
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={() => onEdit(activity)}
+          className="text-[oklch(0.48_0.01_40)] hover:text-[oklch(0.22_0.01_40)] hover:bg-[oklch(0.94_0.008_70)] rounded-xl h-8 px-2 gap-1 text-[11px] font-bold"
+        >
+          <Edit2 size={12} /> Edit
+        </Button>
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={() => onDelete(activity.id)}
+          className="text-red-500 hover:text-red-600 hover:bg-red-50 rounded-xl h-8 px-2 gap-1 text-[11px] font-bold"
+        >
+          <Trash2 size={12} /> Hapus
+        </Button>
+      </div>
+    </div>
   );
 }
 
@@ -568,9 +577,9 @@ export default function RundownPage() {
 
             return (
               <Card key={day.id} className="rounded-3xl border-[oklch(0.90_0.008_70)] shadow-sm bg-white overflow-hidden">
-                <CardHeader className="pb-3 px-6 pt-6 flex flex-row items-center justify-between bg-gradient-to-r from-orange-50/20 to-transparent border-b border-[oklch(0.90_0.008_70)]/60">
-                  <div className="space-y-0.5">
-                    <CardTitle className="font-heading text-base font-extrabold">
+                <CardHeader className="pb-4 px-6 pt-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gradient-to-r from-orange-50/10 to-transparent border-b border-[oklch(0.90_0.008_70)]/60">
+                  <div className="space-y-1">
+                    <CardTitle className="font-heading text-base font-extrabold text-[oklch(0.22_0.01_40)]">
                       Hari {dIdx + 1}
                     </CardTitle>
                     <CardDescription className="text-[10px] font-bold text-[oklch(0.48_0.01_40)] uppercase tracking-wider">
@@ -578,8 +587,8 @@ export default function RundownPage() {
                     </CardDescription>
                   </div>
 
-                  <div className="flex items-center gap-2">
-                    <div className="text-right mr-2">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between sm:justify-end gap-3 w-full sm:w-auto pt-3 sm:pt-0 border-t sm:border-t-0 border-[oklch(0.90_0.008_70)]/40">
+                    <div className="text-left sm:text-right">
                       <span className="text-[9px] uppercase tracking-wider text-[oklch(0.48_0.01_40)] block">
                         Total Hari Ini
                       </span>
@@ -588,64 +597,49 @@ export default function RundownPage() {
                       </span>
                     </div>
 
-                    <Button 
-                      variant="ghost"
-                      onClick={() => handleDeleteDay(day.id, dIdx + 1)}
-                      className="text-red-500 hover:text-red-600 hover:bg-red-50 rounded-xl text-xs h-9 px-2 gap-1.5"
-                    >
-                      <Trash2 size={13} /> Hapus Hari
-                    </Button>
-                    
-                    <Button 
-                      onClick={() => openAddModal(day.id)}
-                      className="rounded-xl bg-[oklch(0.70_0.08_40)] text-white hover:bg-[oklch(0.70_0.08_40)]/90 text-xs h-9 px-3 gap-1 shadow-sm shadow-rose-50"
-                    >
-                      <Plus size={14} /> Tambah Agenda
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <Button 
+                        variant="ghost"
+                        onClick={() => handleDeleteDay(day.id, dIdx + 1)}
+                        className="text-red-500 hover:text-red-600 hover:bg-red-50 rounded-xl text-xs h-9 px-2 gap-1.5 cursor-pointer"
+                      >
+                        <Trash2 size={13} /> Hapus Hari
+                      </Button>
+                      
+                      <Button 
+                        onClick={() => openAddModal(day.id)}
+                        className="rounded-xl bg-[oklch(0.70_0.08_40)] text-white hover:bg-[oklch(0.70_0.08_40)]/90 text-xs h-9 px-3 gap-1 shadow-sm shadow-rose-50 cursor-pointer"
+                      >
+                        <Plus size={14} /> Tambah Agenda
+                      </Button>
+                    </div>
                   </div>
                 </CardHeader>
 
-                <CardContent className="p-0">
-                  <div className="overflow-x-auto">
-                    <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-                      <table className="w-full text-left border-collapse min-w-[700px]">
-                        <thead>
-                          <tr className="bg-[oklch(0.98_0.006_70)]/50 border-b border-[oklch(0.90_0.008_70)] text-[10px] font-bold text-[oklch(0.48_0.01_40)] uppercase tracking-wider">
-                            <th className="p-3 text-center shrink-0 w-8">Urutan</th>
-                            <th className="p-3">Waktu (Jam)</th>
-                            <th className="p-3">Agenda / Kegiatan</th>
-                            <th className="p-3">Lokasi</th>
-                            <th className="p-3">Estimasi Biaya</th>
-                            <th className="p-3">Catatan</th>
-                            <th className="p-3 text-center shrink-0 w-16">Aksi</th>
-                          </tr>
-                        </thead>
-                        <SortableContext 
-                          items={day.activities?.map(a => a.id) || []} 
-                          strategy={verticalListSortingStrategy}
-                        >
-                          <tbody>
-                            {day.activities && day.activities.length > 0 ? (
-                              day.activities.map((activity) => (
-                                <SortableRow 
-                                  key={activity.id} 
-                                  activity={activity} 
-                                  onDelete={handleDeleteActivity}
-                                  onEdit={openEditModal}
-                                />
-                              ))
-                            ) : (
-                              <tr>
-                                <td colSpan={7} className="p-8 text-center text-xs text-[oklch(0.48_0.01_40)]">
-                                  Belum ada agenda kegiatan untuk hari ini.
-                                </td>
-                              </tr>
-                            )}
-                          </tbody>
-                        </SortableContext>
-                      </table>
-                    </DndContext>
-                  </div>
+                <CardContent className="p-6">
+                  <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+                    <SortableContext 
+                      items={day.activities?.map(a => a.id) || []} 
+                      strategy={verticalListSortingStrategy}
+                    >
+                      <div className="space-y-3">
+                        {day.activities && day.activities.length > 0 ? (
+                          day.activities.map((activity) => (
+                            <SortableActivityCard 
+                              key={activity.id} 
+                              activity={activity} 
+                              onDelete={handleDeleteActivity}
+                              onEdit={openEditModal}
+                            />
+                          ))
+                        ) : (
+                          <div className="p-8 text-center text-xs text-[oklch(0.48_0.01_40)] bg-[oklch(0.98_0.006_70)]/30 rounded-2xl border border-dashed border-[oklch(0.90_0.008_70)]/60">
+                            Belum ada agenda kegiatan untuk hari ini.
+                          </div>
+                        )}
+                      </div>
+                    </SortableContext>
+                  </DndContext>
                 </CardContent>
               </Card>
             );
