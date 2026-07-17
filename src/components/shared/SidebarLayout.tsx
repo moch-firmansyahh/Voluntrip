@@ -23,6 +23,7 @@ interface SidebarLayoutProps {
   user: {
     fullName: string;
     username: string;
+    avatarUrl?: string;
   } | null;
 }
 
@@ -190,14 +191,27 @@ export default function SidebarLayout({ children, user }: SidebarLayoutProps) {
           {user && (
             collapsed ? (
               <Link href="/profile" title="Profile Settings">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[oklch(0.70_0.08_40)] to-orange-400 flex items-center justify-center text-white font-heading font-extrabold text-sm shadow-sm cursor-pointer">
-                  {user.fullName.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase() || 'U'}
-                </div>
+                {user.avatarUrl ? (
+                  <img src={user.avatarUrl} alt="Avatar" className="w-10 h-10 rounded-full object-cover shadow-sm cursor-pointer border border-[oklch(0.90_0.008_70)] p-0.5 bg-gradient-to-tr from-amber-50 to-orange-100" />
+                ) : (
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[oklch(0.70_0.08_40)] to-orange-400 flex items-center justify-center text-white font-heading font-extrabold text-sm shadow-sm cursor-pointer">
+                    {user.fullName.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase() || 'U'}
+                  </div>
+                )}
               </Link>
             ) : (
-              <Link href="/profile" className="px-2 block hover:bg-[oklch(0.94_0.008_70)] py-1.5 rounded-xl transition-colors">
-                <p className="font-semibold text-sm truncate">{user.fullName}</p>
-                <p className="text-xs text-[oklch(0.48_0.01_40)] truncate">@{user.username}</p>
+              <Link href="/profile" className="px-2 py-1.5 rounded-xl hover:bg-[oklch(0.94_0.008_70)] transition-colors flex items-center gap-3">
+                {user.avatarUrl ? (
+                  <img src={user.avatarUrl} alt="Avatar" className="w-9 h-9 rounded-full object-cover shrink-0 border border-[oklch(0.90_0.008_70)] p-0.5 bg-gradient-to-tr from-amber-50 to-orange-100" />
+                ) : (
+                  <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-[oklch(0.70_0.08_40)] to-orange-400 flex items-center justify-center text-white font-heading font-bold text-xs shrink-0 shadow-sm">
+                    {user.fullName.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase() || 'U'}
+                  </div>
+                )}
+                <div className="min-w-0 flex-1">
+                  <p className="font-semibold text-sm truncate">{user.fullName}</p>
+                  <p className="text-xs text-[oklch(0.48_0.01_40)] truncate">@{user.username}</p>
+                </div>
               </Link>
             )
           )}
@@ -300,10 +314,19 @@ export default function SidebarLayout({ children, user }: SidebarLayoutProps) {
                 <Link 
                   href="/profile" 
                   onClick={() => setMobileMenuOpen(false)}
-                  className="px-2 block hover:bg-[oklch(0.94_0.008_70)] py-1 rounded-xl"
+                  className="px-2 py-1.5 rounded-xl hover:bg-[oklch(0.94_0.008_70)] transition-colors flex items-center gap-3"
                 >
-                  <p className="font-semibold text-sm truncate">{user.fullName}</p>
-                  <p className="text-xs text-[oklch(0.48_0.01_40)] truncate">@{user.username}</p>
+                  {user.avatarUrl ? (
+                    <img src={user.avatarUrl} alt="Avatar" className="w-9 h-9 rounded-full object-cover shrink-0 border border-[oklch(0.90_0.008_70)] p-0.5 bg-gradient-to-tr from-amber-50 to-orange-100" />
+                  ) : (
+                    <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-[oklch(0.70_0.08_40)] to-orange-400 flex items-center justify-center text-white font-heading font-bold text-xs shrink-0 shadow-sm">
+                      {user.fullName.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase() || 'U'}
+                    </div>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold text-sm truncate">{user.fullName}</p>
+                    <p className="text-xs text-[oklch(0.48_0.01_40)] truncate">@{user.username}</p>
+                  </div>
                 </Link>
               )}
               <Button 

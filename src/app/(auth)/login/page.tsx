@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { Compass, Lock, User, AlertCircle, Loader2, Eye, EyeOff } from 'lucide-react';
 import { Card, CardHeader, CardContent, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -144,7 +145,10 @@ export default function LoginPage() {
             </Button>
             
             <p className="text-xs text-[oklch(0.48_0.01_40)] text-center">
-              Hubungi developer untuk pembuatan akun baru.
+              Belum memiliki akun?{' '}
+              <Link href="/register" className="text-[oklch(0.70_0.08_40)] hover:underline font-bold">
+                Daftar Sekarang
+              </Link>
             </p>
           </CardFooter>
         </form>

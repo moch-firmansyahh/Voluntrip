@@ -6,16 +6,25 @@ import {
   User, 
   Lock, 
   Map, 
-  DollarSign, 
+  Compass, 
   Save, 
   Loader2, 
   CheckCircle2, 
-  AlertCircle 
+  AlertCircle,
+  Mail,
+  Link as LinkIcon
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+
+const PRESETS = [
+  { name: 'Explorer', url: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Felix' },
+  { name: 'Hiker', url: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Aiden' },
+  { name: 'Surfer', url: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Jack' },
+  { name: 'Backpacker', url: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Sasha' }
+];
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -23,6 +32,9 @@ export default function ProfilePage() {
   // User details states
   const [fullName, setFullName] = useState('');
   const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
+  const [selectedAvatar, setSelectedAvatar] = useState(PRESETS[0].url);
+  const [customAvatar, setCustomAvatar] = useState('');
   
   // Password states
   const [oldPassword, setOldPassword] = useState('');
@@ -37,30 +49,28 @@ export default function ProfilePage() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   useEffect(() => {
-    // Get initial session data from cookie-check or page load
     const fetchProfileData = async () => {
       try {
         setLoading(true);
-        // Fetch stats
-        const statsRes = await fetch('/api/profile');
-        if (statsRes.ok) {
-          const statsData = await statsRes.json();
-          setStats(statsData);
-        }
-
-        // We can fetch user identity details from a quick dashboard state or API.
-        // Let's create an endpoint or just read what's in local session.
-        // Actually, we can fetch the user details from the session itself by making an endpoint, or just fetching trips
-        // But since we can fetch profile details, let's look: the profile route PUT logic fetches the current user!
-        // Let's create a GET request in API to return user details as well!
-        // Wait, did we return user details in GET /api/profile?
-        // Let's edit GET /api/profile to also return the current session's username and fullName!
-        // That is very clean. Let's do that in a bit, but for now we can call GET /api/profile and assume it returns that.
         const profileRes = await fetch('/api/profile');
         if (profileRes.ok) {
           const profileData = await profileRes.json();
           setFullName(profileData.fullName || '');
           setUsername(profileData.username || '');
+          setEmail(profileData.email || '');
+          
+          // Match avatar url to presets or custom
+          const avatar = profileData.avatarUrl || '';
+          const matchesPreset = PRESETS.some(p => p.url === avatar);
+          if (matchesPreset) {
+            setSelectedAvatar(avatar);
+            setCustomAvatar('');
+          } else if (avatar) {
+            setCustomAvatar(avatar);
+          } else {
+            setSelectedAvatar(PRESETS[0].url);
+          }
+
           setStats({
             tripsCreated: profileData.tripsCreated || 0,
             expensesCreated: profileData.expensesCreated || 0
@@ -88,12 +98,15 @@ export default function ProfilePage() {
 
     setSaveLoading(true);
     try {
+      const finalAvatar = customAvatar.trim() || selectedAvatar;
       const res = await fetch('/api/profile', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           fullName,
           username,
+          email,
+          avatarUrl: finalAvatar,
           oldPassword: oldPassword || undefined,
           newPassword: newPassword || undefined
         }),
@@ -109,7 +122,7 @@ export default function ProfilePage() {
       setNewPassword('');
       setConfirmPassword('');
       
-      // Refresh router so that the layout updates headers/sidebars with the new session
+      // Refresh router and layout context
       router.refresh();
     } catch (err: any) {
       setErrorMsg(err.message);
@@ -120,45 +133,45 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center p-24 text-[oklch(0.48_0.01_40)]">
+      <div className="flex flex-col items-center justify-center p-24 text-[oklch(0.48_0.01_40)] animate-pulse">
         <Loader2 className="animate-spin mb-2" size={32} />
         <p className="text-sm font-medium">Memuat profil Anda...</p>
       </div>
     );
   }
 
-  // Get initials for Avatar
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map((n) => n[0])
-      .slice(0, 2)
-      .join('')
-      .toUpperCase() || 'U';
-  };
+  // Final rendering avatar url
+  const displayAvatar = customAvatar.trim() || selectedAvatar;
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 animate-fade-in">
       <div className="space-y-1">
-        <h2 className="text-2xl font-extrabold font-heading text-[oklch(0.22_0.01_40)] tracking-tight">
+        <h2 className="text-2xl font-extrabold font-heading text-[oklch(0.38_0.06_210)] tracking-tight">
           Pengaturan Profil
         </h2>
-        <p className="text-xs text-[oklch(0.48_0.01_40)] font-medium">Kelola informasi pribadi dan keamanan kata sandi akun Anda</p>
+        <p className="text-xs text-[oklch(0.48_0.01_40)] font-medium">Kelola data pribadi, kata sandi, dan foto identitas Anda</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Profile Card Info & Stats */}
         <div className="space-y-6">
-          <Card className="rounded-3xl border-[oklch(0.90_0.008_70)] shadow-sm bg-white overflow-hidden text-center p-6">
+          <Card className="rounded-3xl border-[oklch(0.90_0.008_70)] shadow-sm bg-white overflow-hidden text-center p-6 flex flex-col items-center">
             <div className="flex flex-col items-center space-y-4">
-              <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-[oklch(0.70_0.08_40)] to-orange-400 flex items-center justify-center text-white font-heading font-extrabold text-2xl shadow-lg shadow-rose-100">
-                {getInitials(fullName)}
-              </div>
+              {displayAvatar ? (
+                <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-[oklch(0.86_0.05_45)] bg-gradient-to-tr from-amber-50 to-orange-100 p-1 shadow-md">
+                  <img src={displayAvatar} alt="User Avatar" className="w-full h-full object-cover" />
+                </div>
+              ) : (
+                <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-[oklch(0.70_0.08_40)] to-orange-400 flex items-center justify-center text-white font-heading font-extrabold text-2xl shadow-lg shadow-rose-100">
+                  {fullName.split(' ').map((n) => n[0]).slice(0, 2).join('').toUpperCase() || 'U'}
+                </div>
+              )}
               <div>
                 <h3 className="font-heading font-extrabold text-base text-[oklch(0.22_0.01_40)]">
                   {fullName}
                 </h3>
                 <p className="text-xs text-[oklch(0.48_0.01_40)]">@{username}</p>
+                {email && <p className="text-[10px] text-[oklch(0.48_0.01_40)] mt-0.5">{email}</p>}
               </div>
             </div>
           </Card>
@@ -167,13 +180,13 @@ export default function ProfilePage() {
           <div className="grid grid-cols-2 gap-4">
             <Card className="rounded-2xl border-[oklch(0.90_0.008_70)] shadow-sm bg-white p-4 flex flex-col items-center justify-center text-center">
               <Map className="text-[oklch(0.70_0.08_40)] mb-2" size={20} />
-              <span className="text-[10px] font-bold uppercase tracking-wider text-[oklch(0.48_0.01_40)]">Total Trips</span>
-              <span className="font-heading font-extrabold text-lg mt-1">{stats.tripsCreated}</span>
+              <span className="text-[9px] font-bold uppercase tracking-wider text-[oklch(0.48_0.01_40)]">Total Trips</span>
+              <span className="font-heading font-extrabold text-lg mt-1 text-[oklch(0.22_0.01_40)]">{stats.tripsCreated}</span>
             </Card>
             <Card className="rounded-2xl border-[oklch(0.90_0.008_70)] shadow-sm bg-white p-4 flex flex-col items-center justify-center text-center">
-              <DollarSign className="text-teal-600 mb-2" size={20} />
-              <span className="text-[10px] font-bold uppercase tracking-wider text-[oklch(0.48_0.01_40)]">Expenses</span>
-              <span className="font-heading font-extrabold text-lg mt-1">{stats.expensesCreated}</span>
+              <Compass className="text-[oklch(0.38_0.06_210)] mb-2" size={20} />
+              <span className="text-[9px] font-bold uppercase tracking-wider text-[oklch(0.48_0.01_40)]">Agenda</span>
+              <span className="font-heading font-extrabold text-lg mt-1 text-[oklch(0.22_0.01_40)]">{stats.expensesCreated}</span>
             </Card>
           </div>
         </div>
@@ -182,64 +195,127 @@ export default function ProfilePage() {
         <div className="md:col-span-2">
           <Card className="rounded-3xl border-[oklch(0.90_0.008_70)] shadow-sm bg-white p-6">
             <CardHeader className="p-0 pb-6 border-b border-[oklch(0.90_0.008_70)]/60">
-              <CardTitle className="font-heading text-lg font-bold">Informasi Akun</CardTitle>
+              <CardTitle className="font-heading text-lg font-bold text-[oklch(0.22_0.01_40)]">Informasi Akun</CardTitle>
               <CardDescription className="text-xs text-[oklch(0.48_0.01_40)]">
-                Perbarui nama dan rincian login Anda di bawah ini.
+                Perbarui nama, email, foto profil, dan kata sandi Anda.
               </CardDescription>
             </CardHeader>
 
             <CardContent className="p-0 pt-6">
               <form onSubmit={handleUpdateProfile} className="space-y-6">
                 {successMsg && (
-                  <div className="flex items-center gap-2 p-3 text-sm text-teal-700 bg-teal-50 border border-teal-100 rounded-2xl animate-fade-in">
+                  <div className="flex items-center gap-2 p-3 text-xs text-teal-700 bg-teal-50 border border-teal-100 rounded-2xl animate-fade-in">
                     <CheckCircle2 size={16} />
                     <span>{successMsg}</span>
                   </div>
                 )}
                 {errorMsg && (
-                  <div className="flex items-center gap-2 p-3 text-sm text-red-700 bg-red-50 border border-red-100 rounded-2xl animate-fade-in">
+                  <div className="flex items-center gap-2 p-3 text-xs text-red-700 bg-red-50 border border-red-100 rounded-2xl animate-fade-in">
                     <AlertCircle size={16} />
                     <span>{errorMsg}</span>
                   </div>
                 )}
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Email, Name, and Username Row */}
+                <div className="space-y-4">
                   <div className="space-y-1.5">
-                    <Label htmlFor="fullName" className="text-xs font-semibold">Nama Lengkap</Label>
+                    <Label htmlFor="email" className="text-xs font-semibold text-[oklch(0.22_0.01_40)]">Email Address</Label>
                     <div className="relative">
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[oklch(0.48_0.01_40)]">
-                        <User size={15} />
+                        <Mail size={15} />
                       </span>
                       <Input
-                        id="fullName"
-                        value={fullName}
-                        onChange={(e) => setFullName(e.target.value)}
-                        className="pl-9 rounded-xl border-[oklch(0.90_0.008_70)] text-sm"
+                        id="email"
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="pl-9 rounded-xl border-[oklch(0.90_0.008_70)] text-xs h-10 focus-visible:ring-[oklch(0.70_0.08_40)] focus-visible:border-[oklch(0.70_0.08_40)]"
                         required
                       />
                     </div>
                   </div>
 
-                  <div className="space-y-1.5">
-                    <Label htmlFor="username" className="text-xs font-semibold">Username</Label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="fullName" className="text-xs font-semibold text-[oklch(0.22_0.01_40)]">Nama Lengkap</Label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[oklch(0.48_0.01_40)]">
+                          <User size={15} />
+                        </span>
+                        <Input
+                          id="fullName"
+                          value={fullName}
+                          onChange={(e) => setFullName(e.target.value)}
+                          className="pl-9 rounded-xl border-[oklch(0.90_0.008_70)] text-xs h-10 focus-visible:ring-[oklch(0.70_0.08_40)] focus-visible:border-[oklch(0.70_0.08_40)]"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label htmlFor="username" className="text-xs font-semibold text-[oklch(0.22_0.01_40)]">Username</Label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-[oklch(0.48_0.01_40)] font-bold">@</span>
+                        <Input
+                          id="username"
+                          value={username}
+                          onChange={(e) => setUsername(e.target.value)}
+                          className="pl-8 rounded-xl border-[oklch(0.90_0.008_70)] text-xs h-10 focus-visible:ring-[oklch(0.70_0.08_40)] focus-visible:border-[oklch(0.70_0.08_40)]"
+                          required
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Avatar Picker Widget */}
+                <div className="space-y-2.5 pt-4 border-t border-[oklch(0.90_0.008_70)]/60">
+                  <Label className="text-xs font-bold text-[oklch(0.22_0.01_40)] block">Pilih Foto Profil (Avatar)</Label>
+                  <div className="flex gap-4 items-center">
+                    {PRESETS.map((preset) => {
+                      const isSelected = selectedAvatar === preset.url && !customAvatar;
+                      return (
+                        <button
+                          key={preset.name}
+                          type="button"
+                          onClick={() => {
+                            setSelectedAvatar(preset.url);
+                            setCustomAvatar('');
+                          }}
+                          className={`w-12 h-12 rounded-full overflow-hidden border-2 bg-gradient-to-tr from-amber-50 to-orange-100 p-0.5 transition-all cursor-pointer ${
+                            isSelected ? 'border-[oklch(0.38_0.06_210)] scale-110 shadow' : 'border-transparent opacity-70 hover:opacity-100'
+                          }`}
+                          title={preset.name}
+                        >
+                          <img src={preset.url} alt={preset.name} className="w-full h-full object-cover" />
+                        </button>
+                      );
+                    })}
+                  </div>
+                  
+                  <div className="space-y-1">
+                    <Label htmlFor="custom-avatar" className="text-[10px] text-[oklch(0.48_0.01_40)] font-medium">Atau gunakan URL gambar sendiri:</Label>
                     <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-[oklch(0.48_0.01_40)] font-bold">@</span>
-                      <Input
-                        id="username"
-                        value={username}
-                        onChange={(e) => setUsername(e.target.value)}
-                        className="pl-8 rounded-xl border-[oklch(0.90_0.008_70)] text-sm"
-                        required
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[oklch(0.48_0.01_40)]">
+                        <LinkIcon size={13} />
+                      </span>
+                      <Input 
+                        id="custom-avatar"
+                        placeholder="https://example.com/avatar.jpg"
+                        value={customAvatar}
+                        onChange={(e) => setCustomAvatar(e.target.value)}
+                        className="pl-9 h-9 rounded-xl text-xs border-[oklch(0.90_0.008_70)]"
                       />
                     </div>
                   </div>
                 </div>
 
+                {/* Password Fields */}
                 <div className="pt-4 border-t border-[oklch(0.90_0.008_70)]/60 space-y-4">
                   <h4 className="font-heading text-sm font-bold text-[oklch(0.22_0.01_40)]">Ubah Password (Opsional)</h4>
                   
                   <div className="space-y-1.5">
-                    <Label htmlFor="oldPassword" className="text-xs font-semibold">Password Lama</Label>
+                    <Label htmlFor="oldPassword" className="text-xs font-semibold text-[oklch(0.22_0.01_40)]">Password Lama</Label>
                     <div className="relative">
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[oklch(0.48_0.01_40)]">
                         <Lock size={15} />
@@ -250,14 +326,14 @@ export default function ProfilePage() {
                         placeholder="••••••"
                         value={oldPassword}
                         onChange={(e) => setOldPassword(e.target.value)}
-                        className="pl-9 rounded-xl border-[oklch(0.90_0.008_70)] text-sm"
+                        className="pl-9 rounded-xl border-[oklch(0.90_0.008_70)] text-xs h-10 focus-visible:ring-[oklch(0.70_0.08_40)] focus-visible:border-[oklch(0.70_0.08_40)]"
                       />
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
-                      <Label htmlFor="newPassword" className="text-xs font-semibold">Password Baru</Label>
+                      <Label htmlFor="newPassword" className="text-xs font-semibold text-[oklch(0.22_0.01_40)]">Password Baru</Label>
                       <div className="relative">
                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[oklch(0.48_0.01_40)]">
                           <Lock size={15} />
@@ -268,13 +344,13 @@ export default function ProfilePage() {
                           placeholder="Minimal 6 karakter"
                           value={newPassword}
                           onChange={(e) => setNewPassword(e.target.value)}
-                          className="pl-9 rounded-xl border-[oklch(0.90_0.008_70)] text-sm"
+                          className="pl-9 rounded-xl border-[oklch(0.90_0.008_70)] text-xs h-10 focus-visible:ring-[oklch(0.70_0.08_40)] focus-visible:border-[oklch(0.70_0.08_40)]"
                         />
                       </div>
                     </div>
 
                     <div className="space-y-1.5">
-                      <Label htmlFor="confirmPassword" className="text-xs font-semibold">Konfirmasi Password Baru</Label>
+                      <Label htmlFor="confirmPassword" className="text-xs font-semibold text-[oklch(0.22_0.01_40)]">Konfirmasi Password Baru</Label>
                       <div className="relative">
                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[oklch(0.48_0.01_40)]">
                           <Lock size={15} />
@@ -285,7 +361,7 @@ export default function ProfilePage() {
                           placeholder="Ulangi password baru"
                           value={confirmPassword}
                           onChange={(e) => setConfirmPassword(e.target.value)}
-                          className="pl-9 rounded-xl border-[oklch(0.90_0.008_70)] text-sm"
+                          className="pl-9 rounded-xl border-[oklch(0.90_0.008_70)] text-xs h-10 focus-visible:ring-[oklch(0.70_0.08_40)] focus-visible:border-[oklch(0.70_0.08_40)]"
                         />
                       </div>
                     </div>
@@ -296,7 +372,7 @@ export default function ProfilePage() {
                   <Button 
                     type="submit" 
                     disabled={saveLoading}
-                    className="rounded-xl bg-teal-600 hover:bg-teal-700 text-white font-medium text-xs gap-1.5 px-4 h-10 shadow-sm"
+                    className="rounded-xl bg-[oklch(0.70_0.08_40)] hover:bg-[oklch(0.70_0.08_40)]/90 text-white font-bold text-xs gap-1.5 px-4 h-10 shadow"
                   >
                     {saveLoading ? <Loader2 className="animate-spin" size={14} /> : <Save size={14} />}
                     Simpan Perubahan

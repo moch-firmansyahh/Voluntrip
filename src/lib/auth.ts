@@ -8,6 +8,7 @@ export interface UserSessionPayload {
   userId: string;
   username: string;
   fullName: string;
+  avatarUrl?: string;
 }
 
 /**

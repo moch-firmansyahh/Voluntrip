@@ -16,6 +16,7 @@ export default async function DashboardLayout({
   const user = {
     username: session.username,
     fullName: session.fullName,
+    avatarUrl: session.avatarUrl,
   };
 
   return <SidebarLayout user={user}>{children}</SidebarLayout>;

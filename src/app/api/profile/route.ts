@@ -12,15 +12,15 @@ export async function PUT(request: Request) {
     }
 
     const body = await request.json();
-    const { fullName, username, oldPassword, newPassword } = body;
+    const { fullName, username, email, avatarUrl, oldPassword, newPassword } = body;
 
-    if (!fullName || !username) {
-      return NextResponse.json({ error: 'Nama Lengkap dan Username wajib diisi' }, { status: 400 });
+    if (!fullName || !username || !email) {
+      return NextResponse.json({ error: 'Nama Lengkap, Username, dan Email wajib diisi' }, { status: 400 });
     }
 
     // 1. Fetch user's current record
     const userResult = await sql`
-      SELECT id, username, password_hash, full_name
+      SELECT id, username, email, password_hash, full_name, avatar_url
       FROM users
       WHERE id = ${session.userId}
     `;
@@ -41,7 +41,17 @@ export async function PUT(request: Request) {
       }
     }
 
-    // 3. Process password change if requested
+    // 3. Check if email is changing and is already taken
+    if (email !== currentUser.email) {
+      const emailCheck = await sql`
+        SELECT id FROM users WHERE email = ${email} AND id != ${session.userId}
+      `;
+      if (emailCheck.length > 0) {
+        return NextResponse.json({ error: 'Email sudah digunakan oleh akun lain' }, { status: 400 });
+      }
+    }
+
+    // 4. Process password change if requested
     let updatedPasswordHash = currentUser.password_hash;
     if (newPassword) {
       if (!oldPassword) {
@@ -60,21 +70,24 @@ export async function PUT(request: Request) {
       updatedPasswordHash = hashPassword(newPassword);
     }
 
-    // 4. Update database
+    // 5. Update database
     await sql`
       UPDATE users SET
         full_name = ${fullName},
         username = ${username},
+        email = ${email},
+        avatar_url = ${avatarUrl || null},
         password_hash = ${updatedPasswordHash}
       WHERE id = ${session.userId}
     `;
 
-    // 5. Re-sign session cookie
+    // 6. Re-sign session cookie with avatarUrl
     const cookieStore = await cookies();
     const newToken = signToken({
       userId: session.userId,
       username: username,
       fullName: fullName,
+      avatarUrl: avatarUrl || undefined,
     });
 
     cookieStore.set('voluntrip_session', newToken, {
@@ -90,7 +103,9 @@ export async function PUT(request: Request) {
       user: {
         userId: session.userId,
         username: username,
-        fullName: fullName
+        fullName: fullName,
+        email: email,
+        avatarUrl: avatarUrl
       }
     });
 
@@ -100,7 +115,7 @@ export async function PUT(request: Request) {
   }
 }
 
-// GET /api/profile - Fetch profile stats (e.g. total trips)
+// GET /api/profile - Fetch profile stats & details (e.g. total trips)
 export async function GET() {
   try {
     const session = await getSession();
@@ -110,7 +125,7 @@ export async function GET() {
 
     // Get user details
     const userResult = await sql`
-      SELECT username, full_name FROM users WHERE id = ${session.userId}
+      SELECT username, full_name, email, avatar_url FROM users WHERE id = ${session.userId}
     `;
 
     if (userResult.length === 0) {
@@ -122,18 +137,22 @@ export async function GET() {
       SELECT COUNT(id) as count FROM trips WHERE user_id = ${session.userId}
     `;
 
-    // Get count of expenses created by this user
-    const expensesCount = await sql`
-      SELECT COUNT(id) as count FROM expenses WHERE trip_id IN (
-        SELECT id FROM trips WHERE user_id = ${session.userId}
-      )
+    // Get count of total rundown activities
+    const activitiesCount = await sql`
+      SELECT COUNT(ra.id) as count 
+      FROM rundown_activities ra
+      JOIN rundown_days rd ON ra.rundown_day_id = rd.id
+      JOIN trips t ON rd.trip_id = t.id
+      WHERE t.user_id = ${session.userId}
     `;
 
     return NextResponse.json({
       fullName: userResult[0].full_name,
       username: userResult[0].username,
+      email: userResult[0].email,
+      avatarUrl: userResult[0].avatar_url,
       tripsCreated: parseInt(tripsCount[0]?.count || 0),
-      expensesCreated: parseInt(expensesCount[0]?.count || 0),
+      expensesCreated: parseInt(activitiesCount[0]?.count || 0), // Use activities count for stats!
     });
 
   } catch (error: any) {
