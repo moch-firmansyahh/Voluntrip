@@ -58,7 +58,7 @@ export default function SidebarLayout({ children, user }: SidebarLayoutProps) {
   // Specific trip sub-navigation links
   const tripNavItems = tripId ? [
     { name: 'Trip Overview', href: `/trips/${tripId}`, icon: Compass },
-    { name: 'Itinerary (Rundown)', href: `/trips/${tripId}/rundown`, icon: Calendar },
+    { name: 'Itinerary', href: `/trips/${tripId}/rundown`, icon: Calendar },
   ] : [];
 
   const isActive = (href: string) => pathname === href;

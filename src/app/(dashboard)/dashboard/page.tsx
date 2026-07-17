@@ -166,7 +166,7 @@ export default async function DashboardPage() {
         {/* Left Column: Upcoming Activities Table */}
         <div className="lg:col-span-2 space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-bold font-heading text-[oklch(0.38_0.06_210)]">Agenda Selanjutnya (Rundown)</h3>
+            <h3 className="text-lg font-bold font-heading text-[oklch(0.38_0.06_210)]">Agenda Selanjutnya (Itinerary)</h3>
             <span className="text-xs text-[oklch(0.48_0.01_40)] font-medium">Jadwal kunjungan terdekat</span>
           </div>
 

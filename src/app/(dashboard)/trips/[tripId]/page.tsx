@@ -311,7 +311,7 @@ export default function TripDetailPage() {
                   </div>
                   <div>
                     <h4 className="font-bold text-base text-[oklch(0.22_0.01_40)] group-hover:text-[oklch(0.70_0.08_40)] transition-colors">
-                      Itinerary (Rundown & Anggaran)
+                      Itinerary
                     </h4>
                     <p className="text-xs text-[oklch(0.48_0.01_40)] mt-1 leading-relaxed">
                       Susun jadwal kegiatan harian trip Anda secara visual, atur urutan aktivitas dengan drag and drop, serta kelola anggaran terpadu.
@@ -319,7 +319,7 @@ export default function TripDetailPage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-1 text-xs font-semibold text-[oklch(0.70_0.08_40)] pt-2 sm:pt-0 group-hover:translate-x-1 transition-transform shrink-0">
-                  Atur Itinerary & Keuangan <ArrowRight size={14} />
+                  Atur Itinerary <ArrowRight size={14} />
                 </div>
               </Card>
             </Link>
