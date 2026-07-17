@@ -235,23 +235,13 @@ export default function ProfilePage() {
         {/* Profile Editing Form */}
         <div className="md:col-span-2">
           <Card className="rounded-3xl border-[oklch(0.90_0.008_70)] shadow-sm bg-white p-6">
-            <CardHeader className="p-0 pb-6 border-b border-[oklch(0.90_0.008_70)]/60 flex flex-row items-center justify-between">
+            <CardHeader className="p-0 pb-6 border-b border-[oklch(0.90_0.008_70)]/60">
               <div>
                 <CardTitle className="font-heading text-lg font-bold text-[oklch(0.22_0.01_40)]">Informasi Akun</CardTitle>
                 <CardDescription className="text-xs text-[oklch(0.48_0.01_40)]">
                   Perbarui nama, email, foto profil, dan kata sandi Anda.
                 </CardDescription>
               </div>
-              {!isEditing && (
-                <Button
-                  type="button"
-                  onClick={() => setIsEditing(true)}
-                  className="rounded-xl bg-[oklch(0.38_0.06_210)] hover:bg-[oklch(0.38_0.06_210)]/90 text-white font-bold text-xs gap-1.5 h-9 px-3"
-                >
-                  <Edit2 size={13} />
-                  Edit
-                </Button>
-              )}
             </CardHeader>
 
             <CardContent className="p-0 pt-6">
