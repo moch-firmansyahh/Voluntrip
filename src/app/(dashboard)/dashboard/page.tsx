@@ -38,41 +38,37 @@ export default async function DashboardPage() {
   const session = await getSession();
   if (!session) return null;
 
-  // 1. Fetch total trips count
-  const tripCountRes = await sql`
-    SELECT COUNT(*)::int as count FROM trips WHERE user_id = ${session.userId}
-  `;
+  // Fetch dashboard metrics in parallel to eliminate database query waterfalls (NFR latency optimization)
+  const [tripCountRes, upcomingTrips, currentMonthSpend, latestTrips] = await Promise.all([
+    sql`SELECT COUNT(*)::int as count FROM trips WHERE user_id = ${session.userId}`,
+    sql`
+      SELECT id, name, destination, start_date, end_date, cover_image, budget_total, expense_mode
+      FROM trips 
+      WHERE user_id = ${session.userId} AND start_date >= CURRENT_DATE 
+      ORDER BY start_date ASC 
+      LIMIT 1
+    `,
+    sql`
+      SELECT SUM(ra.cost)::float as total 
+      FROM rundown_activities ra
+      JOIN rundown_days rd ON ra.rundown_day_id = rd.id
+      JOIN trips t ON rd.trip_id = t.id
+      WHERE t.user_id = ${session.userId} 
+        AND EXTRACT(MONTH FROM rd.day_date) = EXTRACT(MONTH FROM CURRENT_DATE)
+        AND EXTRACT(YEAR FROM rd.day_date) = EXTRACT(YEAR FROM CURRENT_DATE)
+    `,
+    sql`
+      SELECT id, name, destination, start_date, end_date, cover_image, budget_total, expense_mode
+      FROM trips
+      WHERE user_id = ${session.userId}
+      ORDER BY created_at DESC
+      LIMIT 3
+    `
+  ]);
+
   const totalTrips = tripCountRes[0]?.count || 0;
-
-  // 2. Fetch nearest upcoming trip
-  const upcomingTrips = await sql`
-    SELECT id, name, destination, start_date, end_date, cover_image, budget_total, expense_mode
-    FROM trips 
-    WHERE user_id = ${session.userId} AND start_date >= CURRENT_DATE 
-    ORDER BY start_date ASC 
-    LIMIT 1
-  `;
   const upcomingTrip = upcomingTrips[0] || null;
-
-  // 3. Fetch total spending this month
-  const currentMonthSpend = await sql`
-    SELECT SUM(e.amount)::float as total 
-    FROM expenses e
-    JOIN trips t ON e.trip_id = t.id
-    WHERE t.user_id = ${session.userId} 
-      AND EXTRACT(MONTH FROM e.expense_date) = EXTRACT(MONTH FROM CURRENT_DATE)
-      AND EXTRACT(YEAR FROM e.expense_date) = EXTRACT(YEAR FROM CURRENT_DATE)
-  `;
   const thisMonthExpenses = currentMonthSpend[0]?.total || 0;
-
-  // 4. Fetch list of latest 3 trips
-  const latestTrips = await sql`
-    SELECT id, name, destination, start_date, end_date, cover_image, budget_total, expense_mode
-    FROM trips
-    WHERE user_id = ${session.userId}
-    ORDER BY created_at DESC
-    LIMIT 3
-  `;
 
   return (
     <div className="space-y-8 animate-fade-in">

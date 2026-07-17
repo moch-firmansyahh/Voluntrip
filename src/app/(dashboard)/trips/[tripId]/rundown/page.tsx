@@ -178,6 +178,22 @@ export default function RundownPage() {
   const [isOpen, setIsOpen] = useState(false);
   const [editingActivity, setEditingActivity] = useState<RundownActivity | null>(null);
   const [selectedDayId, setSelectedDayId] = useState<string | null>(null);
+
+  // Custom confirm states
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmTitle, setConfirmTitle] = useState('');
+  const [confirmMessage, setConfirmMessage] = useState('');
+  const [onConfirm, setOnConfirm] = useState<(() => void) | null>(null);
+
+  const showConfirm = (title: string, message: string, callback: () => void) => {
+    setConfirmTitle(title);
+    setConfirmMessage(message);
+    setOnConfirm(() => () => {
+      callback();
+      setConfirmOpen(false);
+    });
+    setConfirmOpen(true);
+  };
   
   // Form states
   const [title, setTitle] = useState('');
@@ -196,29 +212,32 @@ export default function RundownPage() {
     })
   );
 
-  const fetchRundownData = async () => {
+  const fetchRundownData = async (silent = false) => {
     try {
-      setLoading(true);
-      const tripRes = await fetch(`/api/trips/${tripId}`);
+      if (!silent) setLoading(true);
+      // Parallelize fetches to eliminate database waterfalls (NFR loading speed optimization)
+      const [tripRes, rundownRes] = await Promise.all([
+        fetch(`/api/trips/${tripId}`),
+        fetch(`/api/rundown?tripId=${tripId}`)
+      ]);
+
       if (!tripRes.ok) throw new Error('Trip tidak ditemukan');
       const tripData = await tripRes.json();
       setTrip(tripData);
 
-      const rundownRes = await fetch(`/api/rundown?tripId=${tripId}`);
       if (!rundownRes.ok) throw new Error('Gagal memuat rundown trip');
       const rundownData = await rundownRes.json();
-      
       setDays(rundownData || []);
     } catch (err: any) {
       setError(err.message || 'Terjadi kesalahan');
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
   useEffect(() => {
     if (tripId) {
-      fetchRundownData();
+      fetchRundownData(false);
     }
   }, [tripId]);
 
@@ -283,7 +302,7 @@ export default function RundownPage() {
       if (!res.ok) throw new Error('Gagal menyimpan kegiatan');
       
       setIsOpen(false);
-      fetchRundownData();
+      fetchRundownData(true); // Silent background refresh (prevents screen flashes / lag)
     } catch (err: any) {
       alert(err.message);
     } finally {
@@ -292,29 +311,37 @@ export default function RundownPage() {
   };
 
   // Delete Activity
-  const handleDeleteActivity = async (activityId: string) => {
-    if (!confirm('Apakah Anda yakin ingin menghapus agenda kegiatan ini?')) return;
-    try {
-      const res = await fetch(`/api/rundown/${activityId}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error('Gagal menghapus kegiatan');
-      
-      fetchRundownData();
-    } catch (err: any) {
-      alert(err.message);
-    }
+  const handleDeleteActivity = (activityId: string) => {
+    showConfirm(
+      'Hapus Agenda Kegiatan',
+      'Apakah Anda yakin ingin menghapus agenda kegiatan ini?',
+      async () => {
+        try {
+          const res = await fetch(`/api/rundown/${activityId}`, { method: 'DELETE' });
+          if (!res.ok) throw new Error('Gagal menghapus kegiatan');
+          fetchRundownData(true); // Silent background refresh
+        } catch (err: any) {
+          alert(err.message);
+        }
+      }
+    );
   };
 
   // Delete Day
-  const handleDeleteDay = async (dayId: string, dayNumber: number) => {
-    if (!confirm(`Apakah Anda yakin ingin menghapus Hari ${dayNumber} beserta seluruh kegiatannya? Durasi perjalanan Anda akan otomatis disesuaikan (berkurang 1 hari).`)) return;
-    try {
-      const res = await fetch(`/api/rundown/day/${dayId}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error('Gagal menghapus hari');
-      
-      fetchRundownData();
-    } catch (err: any) {
-      alert(err.message);
-    }
+  const handleDeleteDay = (dayId: string, dayNumber: number) => {
+    showConfirm(
+      'Hapus Hari Itinerary',
+      `Apakah Anda yakin ingin menghapus Hari ${dayNumber} beserta seluruh kegiatannya? Durasi perjalanan Anda akan otomatis disesuaikan (berkurang 1 hari).`,
+      async () => {
+        try {
+          const res = await fetch(`/api/rundown/day/${dayId}`, { method: 'DELETE' });
+          if (!res.ok) throw new Error('Gagal menghapus hari');
+          fetchRundownData(true); // Silent background refresh
+        } catch (err: any) {
+          alert(err.message);
+        }
+      }
+    );
   };
 
   // Drag & Drop Handler (Within the same day)
@@ -371,9 +398,23 @@ export default function RundownPage() {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center p-24 text-[oklch(0.48_0.01_40)]">
-        <Loader2 className="animate-spin mb-2" size={32} />
-        <p className="text-sm font-medium">Memuat tabel rundown...</p>
+      <div className="space-y-6 animate-pulse">
+        {/* Header link & titles */}
+        <div className="space-y-2">
+          <div className="h-4 w-32 bg-[oklch(0.92_0.008_240)] rounded-xl" />
+          <div className="h-6 w-64 bg-[oklch(0.92_0.008_240)] rounded-xl" />
+          <div className="h-4 w-96 bg-[oklch(0.92_0.008_240)] rounded-xl" />
+        </div>
+
+        {/* Integrated Budget Card skeleton */}
+        <div className="h-32 w-full rounded-3xl bg-[oklch(0.92_0.008_240)]" />
+
+        {/* Day table skeleton */}
+        <div className="space-y-4 pt-4">
+          {[...Array(2)].map((_, i) => (
+            <div key={i} className="h-48 rounded-3xl bg-[oklch(0.92_0.008_240)]" />
+          ))}
+        </div>
       </div>
     );
   }
@@ -667,6 +708,37 @@ export default function RundownPage() {
               </Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Custom Confirmation Popup Dialog */}
+      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <DialogContent className="rounded-3xl border-[oklch(0.90_0.008_70)] max-w-sm p-6 bg-white animate-fade-in">
+          <DialogHeader>
+            <DialogTitle className="font-heading font-extrabold text-base text-[oklch(0.38_0.06_210)]">
+              {confirmTitle}
+            </DialogTitle>
+            <DialogDescription className="text-xs text-[oklch(0.48_0.01_40)] pt-2 leading-relaxed">
+              {confirmMessage}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex flex-row justify-end gap-2 pt-4">
+            <Button 
+              variant="outline" 
+              onClick={() => setConfirmOpen(false)}
+              className="rounded-xl text-xs h-9 border-[oklch(0.90_0.008_70)] text-[oklch(0.22_0.01_40)] hover:bg-[oklch(0.92_0.008_240)] px-3"
+            >
+              Batal
+            </Button>
+            <Button 
+              onClick={() => {
+                if (onConfirm) onConfirm();
+              }}
+              className="rounded-xl text-xs h-9 bg-red-600 hover:bg-red-700 text-white font-medium px-4 shadow-sm"
+            >
+              Hapus
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

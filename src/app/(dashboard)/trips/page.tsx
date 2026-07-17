@@ -50,6 +50,22 @@ export default function TripsPage() {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null);
 
+  // Custom confirm states
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmTitle, setConfirmTitle] = useState('');
+  const [confirmMessage, setConfirmMessage] = useState('');
+  const [onConfirm, setOnConfirm] = useState<(() => void) | null>(null);
+
+  const showConfirm = (title: string, message: string, callback: () => void) => {
+    setConfirmTitle(title);
+    setConfirmMessage(message);
+    setOnConfirm(() => () => {
+      callback();
+      setConfirmOpen(false);
+    });
+    setConfirmOpen(true);
+  };
+
   // Form states
   const [name, setName] = useState('');
   const [destination, setDestination] = useState('');
@@ -165,18 +181,20 @@ export default function TripsPage() {
   };
 
   // Handle Delete
-  const handleDelete = async (tripId: string) => {
-    if (!confirm('Apakah Anda yakin ingin menghapus trip ini? Semua data rundown dan pengeluaran terkait akan ikut dihapus.')) {
-      return;
-    }
-
-    try {
-      const res = await fetch(`/api/trips/${tripId}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error('Gagal menghapus trip');
-      fetchTrips();
-    } catch (err: any) {
-      alert(err.message);
-    }
+  const handleDelete = (tripId: string) => {
+    showConfirm(
+      'Hapus Rencana Perjalanan',
+      'Apakah Anda yakin ingin menghapus trip ini? Semua data rundown dan pengeluaran terkait akan ikut dihapus.',
+      async () => {
+        try {
+          const res = await fetch(`/api/trips/${tripId}`, { method: 'DELETE' });
+          if (!res.ok) throw new Error('Gagal menghapus trip');
+          fetchTrips();
+        } catch (err: any) {
+          alert(err.message);
+        }
+      }
+    );
   };
 
   const resetForm = () => {
@@ -524,6 +542,37 @@ export default function TripsPage() {
               </Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Custom Confirmation Popup Dialog */}
+      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <DialogContent className="rounded-3xl border-[oklch(0.90_0.008_70)] max-w-sm p-6 bg-white animate-fade-in">
+          <DialogHeader>
+            <DialogTitle className="font-heading font-extrabold text-base text-[oklch(0.38_0.06_210)]">
+              {confirmTitle}
+            </DialogTitle>
+            <DialogDescription className="text-xs text-[oklch(0.48_0.01_40)] pt-2 leading-relaxed">
+              {confirmMessage}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex flex-row justify-end gap-2 pt-4">
+            <Button 
+              variant="outline" 
+              onClick={() => setConfirmOpen(false)}
+              className="rounded-xl text-xs h-9 border-[oklch(0.90_0.008_70)] text-[oklch(0.22_0.01_40)] hover:bg-[oklch(0.92_0.008_240)] px-3"
+            >
+              Batal
+            </Button>
+            <Button 
+              onClick={() => {
+                if (onConfirm) onConfirm();
+              }}
+              className="rounded-xl text-xs h-9 bg-red-600 hover:bg-red-700 text-white font-medium px-4 shadow-sm"
+            >
+              Hapus
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
