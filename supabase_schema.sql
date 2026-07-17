@@ -71,7 +71,8 @@ create table if not exists rundown_activities (
     start_time time not null,
     end_time time not null,
     note text,
-    order_index integer not null
+    order_index integer not null,
+    cost numeric(12, 2) not null default 0.00
 );
 
 -- Seed initial admin user

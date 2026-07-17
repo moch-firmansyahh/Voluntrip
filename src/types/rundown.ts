@@ -15,4 +15,5 @@ export interface RundownActivity {
   end_time: string;
   note: string | null;
   order_index: number;
+  cost: number;
 }

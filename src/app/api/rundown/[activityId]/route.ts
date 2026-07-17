@@ -75,7 +75,8 @@ export async function PUT(
         location = ${data.location || null},
         start_time = ${data.start_time},
         end_time = ${data.end_time},
-        note = ${data.note || null}
+        note = ${data.note || null},
+        cost = ${data.cost}
       WHERE id = ${activityId}
       RETURNING *
     `;

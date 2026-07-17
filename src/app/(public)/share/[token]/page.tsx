@@ -202,57 +202,96 @@ export default function PublicSharePage() {
             </TabsTrigger>
           </TabsList>
 
-          {/* ITINERARY TAB (Read-only Rundown Days & activities) */}
-          <TabsContent value="rundown" className="space-y-6 outline-none">
-            <div className="flex gap-6 overflow-x-auto pb-6 scrollbar-thin items-start">
-              {rundown.length === 0 ? (
-                <div className="bg-white rounded-3xl border border-[oklch(0.90_0.008_70)] p-12 text-center text-xs text-[oklch(0.48_0.01_40)] w-full">
-                  Belum ada jadwal yang disusun.
-                </div>
-              ) : (
-                rundown.map((day, idx) => (
-                  <div key={day.id} className="w-80 shrink-0 bg-white/70 border border-[oklch(0.90_0.008_70)] p-4 rounded-3xl space-y-4">
-                    <div className="space-y-0.5">
-                      <h3 className="font-heading font-extrabold text-sm text-[oklch(0.22_0.01_40)]">
-                        Hari {idx + 1}
-                      </h3>
-                      <p className="text-[10px] text-[oklch(0.48_0.01_40)] font-semibold uppercase">
-                        {formatDayDate(day.day_date)}
-                      </p>
-                    </div>
+          {/* ITINERARY TAB (Read-only Rundown Days & activities in table format) */}
+          <TabsContent value="rundown" className="space-y-8 outline-none">
+            {rundown.length === 0 ? (
+              <div className="bg-white rounded-3xl border border-[oklch(0.90_0.008_70)] p-12 text-center text-xs text-[oklch(0.48_0.01_40)] w-full">
+                Belum ada jadwal yang disusun.
+              </div>
+            ) : (
+              rundown.map((day, idx) => {
+                const dayCost = day.activities?.reduce((sum: number, a: any) => sum + (parseFloat(a.cost) || 0), 0) || 0;
+                
+                return (
+                  <Card key={day.id} className="rounded-3xl border-[oklch(0.90_0.008_70)] shadow-sm bg-white overflow-hidden">
+                    <CardHeader className="pb-3 px-6 pt-6 flex flex-row items-center justify-between bg-gradient-to-r from-orange-50/20 to-transparent border-b border-[oklch(0.90_0.008_70)]/60">
+                      <div className="space-y-0.5">
+                        <CardTitle className="font-heading text-sm font-extrabold">
+                          Hari {idx + 1}
+                        </CardTitle>
+                        <CardDescription className="text-[10px] font-bold text-[oklch(0.48_0.01_40)] uppercase tracking-wider">
+                          {formatDateString(day.day_date)}
+                        </CardDescription>
+                      </div>
 
-                    <div className="space-y-3 min-h-[250px]">
-                      {day.activities && day.activities.length > 0 ? (
-                        day.activities.map((activity: any) => (
-                          <div key={activity.id} className="bg-white p-4 rounded-2xl border border-[oklch(0.90_0.008_70)] shadow-sm space-y-1 min-w-0">
-                            <h4 className="font-bold text-xs text-[oklch(0.22_0.01_40)] leading-snug">{activity.title}</h4>
-                            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-[oklch(0.48_0.01_40)] font-medium">
-                              <span className="flex items-center gap-1">
-                                <Clock size={11} /> {activity.start_time.substring(0, 5)} - {activity.end_time.substring(0, 5)}
-                              </span>
-                              {activity.location && (
-                                <span className="flex items-center gap-0.5">
-                                  <MapPin size={11} /> {activity.location}
-                                </span>
-                              )}
-                            </div>
-                            {activity.note && (
-                              <p className="text-[9px] text-[oklch(0.48_0.01_40)] italic border-l-2 border-[oklch(0.90_0.008_70)] pl-2 mt-1 leading-normal">
-                                {activity.note}
-                              </p>
+                      <div className="text-right">
+                        <span className="text-[9px] uppercase tracking-wider text-[oklch(0.48_0.01_40)] block">
+                          Total Biaya Hari Ini
+                        </span>
+                        <span className="font-extrabold text-sm text-teal-600">
+                          {formatIDR(dayCost)}
+                        </span>
+                      </div>
+                    </CardHeader>
+
+                    <CardContent className="p-0">
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse min-w-[650px]">
+                          <thead>
+                            <tr className="bg-[oklch(0.98_0.006_70)]/50 border-b border-[oklch(0.90_0.008_70)] text-[10px] font-bold text-[oklch(0.48_0.01_40)] uppercase tracking-wider">
+                              <th className="p-3 pl-6">Waktu (Jam)</th>
+                              <th className="p-3">Agenda / Kegiatan</th>
+                              <th className="p-3">Lokasi</th>
+                              <th className="p-3">Estimasi Biaya</th>
+                              <th className="p-3 pr-6">Catatan</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {day.activities && day.activities.length > 0 ? (
+                              day.activities.map((activity: any) => (
+                                <tr key={activity.id} className="border-b border-[oklch(0.90_0.008_70)] hover:bg-[oklch(0.98_0.006_70)]/30 transition-colors">
+                                  <td className="p-3 pl-6 text-xs font-semibold text-[oklch(0.22_0.01_40)] align-middle whitespace-nowrap">
+                                    <div className="flex items-center gap-1.5">
+                                      <Clock size={12} className="text-[oklch(0.48_0.01_40)]" />
+                                      {activity.start_time.substring(0, 5)} - {activity.end_time.substring(0, 5)}
+                                    </div>
+                                  </td>
+                                  <td className="p-3 text-xs font-bold text-[oklch(0.22_0.01_40)] align-middle">
+                                    {activity.title}
+                                  </td>
+                                  <td className="p-3 text-xs text-[oklch(0.22_0.01_40)] align-middle">
+                                    {activity.location ? (
+                                      <div className="flex items-center gap-1">
+                                        <MapPin size={12} className="text-orange-500" />
+                                        <span>{activity.location}</span>
+                                      </div>
+                                    ) : (
+                                      <span className="text-[oklch(0.48_0.01_40)] italic">-</span>
+                                    )}
+                                  </td>
+                                  <td className="p-3 text-xs font-extrabold text-teal-600 align-middle">
+                                    {formatIDR(parseFloat(activity.cost || 0))}
+                                  </td>
+                                  <td className="p-3 pr-6 text-[11px] text-[oklch(0.48_0.01_40)] italic align-middle max-w-xs truncate">
+                                    {activity.note || '-'}
+                                  </td>
+                                </tr>
+                              ))
+                            ) : (
+                              <tr>
+                                <td colSpan={5} className="p-8 text-center text-xs text-[oklch(0.48_0.01_40)]">
+                                  Belum ada agenda kegiatan untuk hari ini.
+                                </td>
+                              </tr>
                             )}
-                          </div>
-                        ))
-                      ) : (
-                        <div className="h-full flex flex-col items-center justify-center p-6 text-center border border-dashed border-[oklch(0.90_0.008_70)] rounded-2xl text-[oklch(0.48_0.01_40)] min-h-[250px]">
-                          <p className="text-[10px] font-semibold text-[oklch(0.48_0.01_40)]/40">Agenda Kosong</p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
+                          </tbody>
+                        </table>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })
+            )}
           </TabsContent>
 
           {/* BUDGET & EXPENSES TAB (Read-only metrics, pie chart, expenses lists) */}

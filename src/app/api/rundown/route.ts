@@ -47,7 +47,7 @@ export async function GET(request: Request) {
 
     // Fetch rundown activities
     const activities = await sql`
-      SELECT id, rundown_day_id, title, location, start_time, end_time, note, order_index
+      SELECT id, rundown_day_id, title, location, start_time, end_time, note, order_index, cost
       FROM rundown_activities
       WHERE rundown_day_id = ANY(${dayIds})
       ORDER BY order_index ASC, start_time ASC
@@ -109,9 +109,9 @@ export async function POST(request: Request) {
     // Insert activity
     const activities = await sql`
       INSERT INTO rundown_activities (
-        rundown_day_id, title, location, start_time, end_time, note, order_index
+        rundown_day_id, title, location, start_time, end_time, note, order_index, cost
       ) VALUES (
-        ${rundownDayId}, ${data.title}, ${data.location || null}, ${data.start_time}, ${data.end_time}, ${data.note || null}, ${nextIndex}
+        ${rundownDayId}, ${data.title}, ${data.location || null}, ${data.start_time}, ${data.end_time}, ${data.note || null}, ${nextIndex}, ${data.cost}
       ) RETURNING *
     `;
 
