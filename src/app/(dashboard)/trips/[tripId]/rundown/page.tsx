@@ -255,6 +255,11 @@ export default function RundownPage() {
       const url = editingActivity ? `/api/rundown/${editingActivity.id}` : '/api/rundown';
       const method = editingActivity ? 'PUT' : 'POST';
       
+      let parsedCost = parseFloat(cost) || 0;
+      if (parsedCost > 0 && parsedCost < 10000) {
+        parsedCost = parsedCost * 1000;
+      }
+
       const res = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
@@ -264,7 +269,7 @@ export default function RundownPage() {
           location,
           start_time: startTime,
           end_time: endTime,
-          cost: parseFloat(cost) || 0,
+          cost: parsedCost,
           note,
         }),
       });
@@ -577,11 +582,16 @@ export default function RundownPage() {
               <Input 
                 id="cost" 
                 type="number" 
-                placeholder="150000" 
+                placeholder="Contoh: 200 (untuk 200rb) atau 2000 (untuk 2jt)" 
                 value={cost} 
                 onChange={(e) => setCost(e.target.value)} 
                 className="rounded-xl border-[oklch(0.90_0.008_70)]"
               />
+              {cost && parseFloat(cost) > 0 && parseFloat(cost) < 10000 && (
+                <p className="text-[10px] text-teal-600 font-bold mt-1">
+                  ✓ Otomatis menjadi: {formatIDR(parseFloat(cost) * 1000)}
+                </p>
+              )}
             </div>
 
             <div className="space-y-1.5">

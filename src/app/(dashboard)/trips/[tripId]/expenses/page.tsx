@@ -112,7 +112,10 @@ export default function ExpensesPage() {
   // Recalculate split shares when amount or participants change
   useEffect(() => {
     if (splitEqually && tempParticipants.length > 0 && amount) {
-      const amtVal = parseFloat(amount) || 0;
+      let amtVal = parseFloat(amount) || 0;
+      if (amtVal > 0 && amtVal < 10000) {
+        amtVal = amtVal * 1000;
+      }
       // Split equally includes the owner + all other participants
       const divisor = tempParticipants.length + 1; 
       const shareVal = (amtVal / divisor).toFixed(2);
@@ -164,7 +167,11 @@ export default function ExpensesPage() {
       return;
     }
 
-    const amtVal = parseFloat(amount);
+    let amtVal = parseFloat(amount);
+    if (amtVal > 0 && amtVal < 10000) {
+      amtVal = amtVal * 1000;
+    }
+
     if (isNaN(amtVal) || amtVal <= 0) {
       alert('Nominal harus lebih besar dari 0');
       return;
@@ -558,12 +565,17 @@ export default function ExpensesPage() {
                 <Input 
                   id="amount" 
                   type="number" 
-                  placeholder="50000" 
+                  placeholder="Contoh: 200 (untuk 200rb) atau 2000 (untuk 2jt)" 
                   value={amount} 
                   onChange={(e) => setAmount(e.target.value)} 
                   className="rounded-xl border-[oklch(0.90_0.008_70)]"
                   required
                 />
+                {amount && parseFloat(amount) > 0 && parseFloat(amount) < 10000 && (
+                  <p className="text-[10px] text-teal-600 font-bold mt-1">
+                    ✓ Otomatis menjadi: {formatIDR(parseFloat(amount) * 1000)}
+                  </p>
+                )}
               </div>
 
               <div className="space-y-1.5">
