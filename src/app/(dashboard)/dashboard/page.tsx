@@ -5,12 +5,12 @@ import { sql } from '@/lib/supabase';
 import { 
   Calendar, 
   MapPin, 
-  DollarSign, 
   Layers, 
   Plus, 
-  ArrowRight,
   TrendingUp,
-  Compass
+  Compass,
+  ArrowRight,
+  Clock
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardContent, CardTitle, CardDescription } from '@/components/ui/card';
@@ -38,8 +38,8 @@ export default async function DashboardPage() {
   const session = await getSession();
   if (!session) return null;
 
-  // Fetch dashboard metrics in parallel to eliminate database query waterfalls (NFR latency optimization)
-  const [tripCountRes, upcomingTrips, currentMonthSpend, latestTrips] = await Promise.all([
+  // Fetch dashboard metrics and upcoming activities in parallel to eliminate database waterfalls (NFR latency optimization)
+  const [tripCountRes, upcomingTrips, currentMonthSpend, latestTrips, upcomingActivities] = await Promise.all([
     sql`SELECT COUNT(*)::int as count FROM trips WHERE user_id = ${session.userId}`,
     sql`
       SELECT id, name, destination, start_date, end_date, cover_image, budget_total, expense_mode
@@ -63,6 +63,25 @@ export default async function DashboardPage() {
       WHERE user_id = ${session.userId}
       ORDER BY created_at DESC
       LIMIT 3
+    `,
+    sql`
+      SELECT 
+        ra.id,
+        ra.title,
+        ra.start_time,
+        ra.end_time,
+        ra.location,
+        ra.cost,
+        rd.day_date,
+        t.name as trip_name,
+        t.id as trip_id
+      FROM rundown_activities ra
+      JOIN rundown_days rd ON ra.rundown_day_id = rd.id
+      JOIN trips t ON rd.trip_id = t.id
+      WHERE t.user_id = ${session.userId}
+        AND rd.day_date >= CURRENT_DATE
+      ORDER BY rd.day_date ASC, ra.start_time ASC
+      LIMIT 6
     `
   ]);
 
@@ -83,7 +102,7 @@ export default async function DashboardPage() {
           </p>
         </div>
         <Link href="/trips">
-          <Button className="rounded-xl bg-[oklch(0.70_0.08_40)] text-white hover:bg-[oklch(0.70_0.08_40)]/90 gap-2 shadow-md shadow-rose-100">
+          <Button className="rounded-xl bg-[oklch(0.70_0.08_40)] text-white hover:bg-[oklch(0.70_0.08_40)]/90 gap-2 shadow-md shadow-rose-50">
             <Plus size={18} />
             Buat Trip Baru
           </Button>
@@ -144,78 +163,97 @@ export default async function DashboardPage() {
 
       {/* Main Sections */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column: Recent Trips list */}
+        {/* Left Column: Upcoming Activities Table */}
         <div className="lg:col-span-2 space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-bold font-heading">Trip Terbaru</h3>
-            <Link href="/trips" className="text-xs font-semibold text-[oklch(0.70_0.08_40)] flex items-center gap-1 hover:underline">
-              Lihat semua <ArrowRight size={14} />
-            </Link>
+            <h3 className="text-lg font-bold font-heading text-[oklch(0.38_0.06_210)]">Agenda Selanjutnya (Rundown)</h3>
+            <span className="text-xs text-[oklch(0.48_0.01_40)] font-medium">Jadwal kunjungan terdekat</span>
           </div>
 
-          <div className="space-y-4">
-            {latestTrips.length === 0 ? (
-              <div className="bg-white rounded-3xl border border-[oklch(0.90_0.008_70)] p-8 text-center text-[oklch(0.48_0.01_40)] space-y-3">
-                <Compass size={40} className="mx-auto text-[oklch(0.48_0.01_40)]/40" />
-                <p className="text-sm font-medium">Anda belum membuat rencana perjalanan.</p>
-                <Link href="/trips">
-                  <Button variant="outline" className="rounded-xl mt-2 text-xs">Buat Trip Sekarang</Button>
-                </Link>
-              </div>
-            ) : (
-              latestTrips.map((trip: any) => (
-                <Link key={trip.id} href={`/trips/${trip.id}`} className="block group">
-                  <Card className="rounded-3xl border-[oklch(0.90_0.008_70)] shadow-sm bg-white hover:shadow-md transition-all overflow-hidden">
-                    <CardContent className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                      <div className="flex items-start gap-4">
-                        {trip.cover_image ? (
-                          <img 
-                            src={trip.cover_image} 
-                            alt={trip.name} 
-                            className="w-14 h-14 rounded-2xl object-cover" 
-                          />
-                        ) : (
-                          <div className="w-14 h-14 rounded-2xl bg-[oklch(0.86_0.05_45)]/50 text-[oklch(0.70_0.08_40)] flex items-center justify-center font-bold text-lg">
-                            🏝️
-                          </div>
-                        )}
-                        <div className="space-y-1">
-                          <h4 className="font-bold text-base text-[oklch(0.22_0.01_40)] group-hover:text-[oklch(0.70_0.08_40)] transition-colors">
-                            {trip.name}
-                          </h4>
-                          <p className="text-xs text-[oklch(0.48_0.01_40)] flex items-center gap-1 font-medium">
-                            <MapPin size={12} /> {trip.destination}
-                          </p>
-                          <p className="text-xs text-[oklch(0.48_0.01_40)]">
-                            {formatDateString(trip.start_date)} - {formatDateString(trip.end_date)}
-                          </p>
-                        </div>
-                      </div>
+          <Card className="rounded-3xl border-[oklch(0.90_0.008_70)] shadow-sm bg-white overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-[oklch(0.98_0.006_70)] border-b border-[oklch(0.90_0.008_70)] text-[10px] font-bold text-[oklch(0.48_0.01_40)] uppercase tracking-wider">
+                    <th className="p-4 pl-6">Tanggal & Waktu</th>
+                    <th className="p-4">Trip</th>
+                    <th className="p-4">Agenda / Kegiatan</th>
+                    <th className="p-4">Lokasi & Navigasi</th>
+                    <th className="p-4 pr-6 text-center">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {upcomingActivities.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="p-8 text-center text-xs text-[oklch(0.48_0.01_40)] space-y-2">
+                        <Calendar size={32} className="mx-auto text-[oklch(0.48_0.01_40)]/30 mb-2" />
+                        <p className="font-semibold text-sm">Belum ada agenda kegiatan terdekat.</p>
+                        <p className="text-[10px] text-[oklch(0.48_0.01_40)]">Silakan buka menu trip Anda dan tambahkan rundown harian baru.</p>
+                      </td>
+                    </tr>
+                  ) : (
+                    upcomingActivities.map((act: any) => (
+                      <tr key={act.id} className="border-b border-[oklch(0.90_0.008_70)]/60 hover:bg-[oklch(0.98_0.006_70)]/30 transition-colors">
+                        {/* Date & Time */}
+                        <td className="p-4 pl-6 text-xs text-[oklch(0.22_0.01_40)] align-middle whitespace-nowrap">
+                          <span className="font-semibold block">{formatDateString(act.day_date)}</span>
+                          <span className="text-[10px] text-[oklch(0.48_0.01_40)] mt-0.5 block flex items-center gap-1">
+                            <Clock size={11} /> {act.start_time.substring(0, 5)} - {act.end_time.substring(0, 5)}
+                          </span>
+                        </td>
+                        
+                        {/* Trip Name */}
+                        <td className="p-4 text-xs font-bold text-[oklch(0.38_0.06_210)] align-middle truncate max-w-[120px]">
+                          {act.trip_name}
+                        </td>
+                        
+                        {/* Activity Title */}
+                        <td className="p-4 text-xs font-bold text-[oklch(0.22_0.01_40)] align-middle">
+                          {act.title}
+                        </td>
+                        
+                        {/* Location & GMaps redirection */}
+                        <td className="p-4 text-xs text-[oklch(0.22_0.01_40)] align-middle">
+                          {act.location ? (
+                            <a 
+                              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(act.location)}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 text-[oklch(0.70_0.08_40)] hover:underline cursor-pointer"
+                              title="Navigasi ke Google Maps"
+                            >
+                              <MapPin size={12} className="text-orange-500 shrink-0" />
+                              <span className="truncate max-w-[120px] font-medium">{act.location}</span>
+                            </a>
+                          ) : (
+                            <span className="text-[oklch(0.48_0.01_40)] italic">-</span>
+                          )}
+                        </td>
 
-                      <div className="flex items-center justify-between sm:justify-end gap-6 border-t sm:border-t-0 pt-3 sm:pt-0">
-                        <div className="text-left sm:text-right">
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-[oklch(0.48_0.01_40)] block">
-                            Budget
-                          </span>
-                          <span className="font-extrabold text-sm text-[oklch(0.22_0.01_40)]">
-                            {formatIDR(parseFloat(trip.budget_total))}
-                          </span>
-                        </div>
-                        <div className="px-3 py-1 rounded-full text-[10px] font-bold bg-[oklch(0.86_0.05_45)] text-[oklch(0.70_0.08_40)] capitalize">
-                          {trip.expense_mode === 'split' ? 'Split Bill' : 'Per Trip'}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-              ))
-            )}
-          </div>
+                        {/* Action link */}
+                        <td className="p-4 pr-6 text-center align-middle whitespace-nowrap">
+                          <Link href={`/trips/${act.trip_id}/rundown`}>
+                            <Button 
+                              size="sm" 
+                              variant="ghost"
+                              className="rounded-xl text-[10px] h-8 text-[oklch(0.38_0.06_210)] hover:bg-[oklch(0.86_0.05_45)]/40 hover:text-[oklch(0.38_0.06_210)] font-bold px-3 border border-[oklch(0.90_0.008_70)]"
+                            >
+                              Itinerary
+                            </Button>
+                          </Link>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </Card>
         </div>
 
         {/* Right Column: Mini Travel Guide / Widget */}
         <div className="space-y-4">
-          <h3 className="text-lg font-bold font-heading">Travel Tips</h3>
+          <h3 className="text-lg font-bold font-heading text-[oklch(0.38_0.06_210)]">Panduan Cepat</h3>
           <Card className="rounded-3xl border-[oklch(0.90_0.008_70)] shadow-sm bg-white overflow-hidden">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-bold text-[oklch(0.22_0.01_40)]">Mulai Perencanaan</CardTitle>
@@ -231,11 +269,11 @@ export default async function DashboardPage() {
               </div>
               <div className="flex items-start gap-2">
                 <span className="w-5 h-5 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center font-bold text-[10px] shrink-0 mt-0.5">3</span>
-                <p>Catat pengeluaran secara real-time. Gunakan fitur split bill jika pergi bersama teman.</p>
+                <p>Ketik nama lokasi pada agenda untuk memunculkan pilihan otomatis dari Peta.</p>
               </div>
               <div className="flex items-start gap-2">
                 <span className="w-5 h-5 rounded-full bg-purple-50 text-purple-500 flex items-center justify-center font-bold text-[10px] shrink-0 mt-0.5">4</span>
-                <p>Bagikan link trip publik ke teman perjalanan Anda untuk dilihat bersama.</p>
+                <p>Bagikan link trip publik ke teman perjalanan Anda untuk dipantau bersama.</p>
               </div>
             </CardContent>
           </Card>
