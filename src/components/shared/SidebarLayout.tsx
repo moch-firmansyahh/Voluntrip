@@ -85,7 +85,7 @@ export default function SidebarLayout({ children, user }: SidebarLayoutProps) {
       {/* DESKTOP SIDEBAR */}
       <aside 
         className={`hidden md:flex flex-col relative bg-white border-r border-[oklch(0.90_0.008_70)] shrink-0 sticky top-0 h-screen justify-between shadow-sm transition-all duration-300 ease-in-out ${
-          collapsed ? 'w-20 px-3 py-6' : 'w-64 p-6'
+          collapsed ? 'w-16 px-2 py-6' : 'w-56 p-6'
         }`}
       >
         {/* Collapse toggle button */}
@@ -100,12 +100,15 @@ export default function SidebarLayout({ children, user }: SidebarLayoutProps) {
         <div className="space-y-6">
           {/* Logo Branding */}
           <div className={`flex items-center transition-all duration-300 ${collapsed ? 'justify-center w-full' : 'gap-3 px-2'}`}>
-            <div className={`overflow-hidden transition-all duration-300 flex items-center ${collapsed ? 'w-10 h-10 justify-center' : 'w-full h-10'}`}>
+            <div className={`transition-all duration-300 flex items-center justify-center ${collapsed ? 'w-10 h-10' : 'w-full h-10'}`}>
               <img 
                 src="/images/Logo_voluntrip.png" 
                 alt="Voluntrip Logo" 
-                className="h-10 max-w-none object-contain" 
-                style={{ width: collapsed ? '110px' : '150px', transform: collapsed ? 'translateX(-12px)' : 'none' }}
+                className="object-contain transition-all duration-300" 
+                style={{ 
+                  width: collapsed ? '36px' : '140px', 
+                  height: collapsed ? '36px' : '40px'
+                }}
               />
             </div>
           </div>
