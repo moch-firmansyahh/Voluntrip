@@ -52,16 +52,9 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-[oklch(0.98_0.006_70)] flex flex-col items-center justify-center p-4">
       {/* Brand Icon/Name */}
-      <div className="flex items-center gap-3 mb-8 animate-fade-in">
-        <div className="w-12 h-12 rounded-2xl bg-[oklch(0.64_0.22_30)] flex items-center justify-center text-white font-bold text-2xl shadow-lg shadow-orange-100">
-          V
-        </div>
-        <div>
-          <h1 className="font-heading font-extrabold text-2xl text-[oklch(0.22_0.01_40)] tracking-tight">
-            Voluntrip
-          </h1>
-          <p className="text-xs text-[oklch(0.48_0.01_40)] font-medium">Plan your journey, share the fun</p>
-        </div>
+      <div className="flex flex-col items-center gap-2 mb-8 animate-fade-in">
+        <img src="/images/Logo_voluntrip.png" alt="Voluntrip Logo" className="h-16 w-auto object-contain" />
+        <p className="text-xs text-[oklch(0.48_0.01_40)] font-medium">Plan your journey, share the fun</p>
       </div>
 
       {/* Card Form */}

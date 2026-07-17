@@ -142,10 +142,7 @@ export default function PublicSharePage() {
       <header className="bg-white border-b border-[oklch(0.90_0.008_70)] sticky top-0 z-30 px-6 py-4 shadow-sm">
         <div className="max-w-5xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-[oklch(0.64_0.22_30)] flex items-center justify-center text-white font-bold text-lg shadow-sm">
-              V
-            </div>
-            <span className="font-heading font-extrabold text-lg text-[oklch(0.64_0.22_30)] tracking-tight">Voluntrip</span>
+            <img src="/images/Logo_voluntrip.png" alt="Voluntrip Logo" className="h-8 w-auto object-contain" />
           </div>
           <span className="text-[10px] font-bold bg-orange-50 text-[oklch(0.64_0.22_30)] px-3 py-1 rounded-full uppercase tracking-wider">
             Shared Plan View

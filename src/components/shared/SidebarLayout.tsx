@@ -64,10 +64,7 @@ export default function SidebarLayout({ children, user }: SidebarLayoutProps) {
       {/* MOBILE HEADER */}
       <header className="md:hidden sticky top-0 z-40 bg-white border-b border-[oklch(0.90_0.008_70)] px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="relative w-8 h-8 rounded-lg bg-[oklch(0.64_0.22_30)] flex items-center justify-center text-white font-bold text-lg shadow-sm">
-            V
-          </div>
-          <span className="font-heading font-bold text-lg text-[oklch(0.64_0.22_30)]">Voluntrip</span>
+          <img src="/images/Logo_voluntrip.png" alt="Voluntrip Logo" className="h-8 w-auto object-contain" />
         </div>
         <div className="flex items-center gap-3">
           <Button 
@@ -86,13 +83,7 @@ export default function SidebarLayout({ children, user }: SidebarLayoutProps) {
         <div className="space-y-6">
           {/* Logo Branding */}
           <div className="flex items-center gap-3 px-2">
-            <div className="w-10 h-10 rounded-xl bg-[oklch(0.64_0.22_30)] flex items-center justify-center text-white font-bold text-xl shadow-md shadow-orange-100">
-              V
-            </div>
-            <div>
-              <span className="font-heading font-bold text-xl block text-[oklch(0.64_0.22_30)] tracking-tight">Voluntrip</span>
-              <span className="text-xs text-[oklch(0.48_0.01_40)] font-medium">Travel Smart</span>
-            </div>
+            <img src="/images/Logo_voluntrip.png" alt="Voluntrip Logo" className="h-10 w-auto object-contain" />
           </div>
 
           <hr className="border-[oklch(0.90_0.008_70)]" />
@@ -183,10 +174,7 @@ export default function SidebarLayout({ children, user }: SidebarLayoutProps) {
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-[oklch(0.64_0.22_30)] flex items-center justify-center text-white font-bold text-lg shadow-sm">
-                    V
-                  </div>
-                  <span className="font-heading font-bold text-lg text-[oklch(0.64_0.22_30)]">Voluntrip</span>
+                  <img src="/images/Logo_voluntrip.png" alt="Voluntrip Logo" className="h-8 w-auto object-contain" />
                 </div>
                 <Button variant="ghost" size="icon" onClick={() => setMobileMenuOpen(false)}>
                   <X size={20} />
