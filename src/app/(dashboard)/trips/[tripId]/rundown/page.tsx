@@ -204,6 +204,48 @@ export default function RundownPage() {
   const [note, setNote] = useState('');
   const [formLoading, setFormLoading] = useState(false);
 
+  // Suggestions search states
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+
+  // Debounced search for locations using free Nominatim API in Indonesian language
+  useEffect(() => {
+    if (!location || location.length < 3) {
+      setSuggestions([]);
+      return;
+    }
+    
+    // Skip fetching if the query exactly matches a suggestion already selected
+    const matchesSuggestion = suggestions.some(s => s.display_name === location);
+    if (matchesSuggestion) return;
+
+    const timer = setTimeout(async () => {
+      setSearchLoading(true);
+      try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(location)}&limit=5`, {
+          headers: {
+            'Accept-Language': 'id-ID,id;q=0.9,en;q=0.8'
+          }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setSuggestions(data || []);
+        }
+      } catch (err) {
+        console.error('Error fetching location suggestions:', err);
+      } finally {
+        setSearchLoading(false);
+      }
+    }, 450); // 450ms debounce
+
+    return () => clearTimeout(timer);
+  }, [location]);
+
+  const selectLocation = (displayName: string) => {
+    setLocation(displayName);
+    setSuggestions([]);
+  };
+
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -251,6 +293,7 @@ export default function RundownPage() {
     setEndTime('09:00');
     setCost('0');
     setNote('');
+    setSuggestions([]);
     setIsOpen(true);
   };
 
@@ -264,6 +307,7 @@ export default function RundownPage() {
     setEndTime(activity.end_time.substring(0, 5));
     setCost(activity.cost.toString());
     setNote(activity.note || '');
+    setSuggestions([]);
     setIsOpen(true);
   };
 
@@ -634,15 +678,38 @@ export default function RundownPage() {
               />
             </div>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="location" className="text-xs font-semibold">Lokasi</Label>
-              <Input 
-                id="location" 
-                placeholder="Contoh: Pantai Kuta, Badung" 
-                value={location} 
-                onChange={(e) => setLocation(e.target.value)} 
-                className="rounded-xl border-[oklch(0.90_0.008_70)]"
-              />
+            <div className="space-y-1.5 relative">
+              <Label htmlFor="location" className="text-xs font-semibold">Lokasi Kegiatan (Google Maps)</Label>
+              <div className="relative">
+                <Input 
+                  id="location" 
+                  placeholder="Ketik untuk mencari lokasi (contoh: Pantai Kuta)" 
+                  value={location} 
+                  onChange={(e) => setLocation(e.target.value)} 
+                  className="rounded-xl border-[oklch(0.90_0.008_70)] pr-8"
+                  autoComplete="off"
+                />
+                {searchLoading && (
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <Loader2 className="animate-spin text-[oklch(0.48_0.01_40)]" size={14} />
+                  </span>
+                )}
+              </div>
+              
+              {suggestions.length > 0 && (
+                <div className="absolute z-50 left-0 right-0 mt-1 bg-white border border-[oklch(0.90_0.008_70)] rounded-xl shadow-lg max-h-48 overflow-y-auto divide-y divide-[oklch(0.90_0.008_70)]/50">
+                  {suggestions.map((item, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => selectLocation(item.display_name)}
+                      className="w-full text-left px-3 py-2 text-[11px] hover:bg-[oklch(0.92_0.008_240)] text-[oklch(0.22_0.01_40)] truncate block"
+                    >
+                      {item.display_name}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
