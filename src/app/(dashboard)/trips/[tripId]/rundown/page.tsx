@@ -220,7 +220,7 @@ export default function RundownPage() {
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
 
-  // Debounced search for locations using free Nominatim API in Indonesian language
+  // Debounced search for locations using free Nominatim API with fuzzy fallback
   useEffect(() => {
     if (!location || location.length < 3) {
       setSuggestions([]);
@@ -234,21 +234,62 @@ export default function RundownPage() {
     const timer = setTimeout(async () => {
       setSearchLoading(true);
       try {
-        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(location)}&limit=6&countrycodes=id&addressdetails=1`, {
-          headers: {
-            'Accept-Language': 'id-ID,id;q=0.9,en;q=0.8'
-          }
-        });
+        const headers = { 'Accept-Language': 'id-ID,id;q=0.9,en;q=0.8' };
+        
+        // Strategy 1: Search exact query (no country restriction for broader results)
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(location)}&limit=6&addressdetails=1`,
+          { headers }
+        );
+        
         if (res.ok) {
           const data = await res.json();
-          setSuggestions(data || []);
+          
+          if (data && data.length > 0) {
+            setSuggestions(data);
+          } else {
+            // Strategy 2: Retry with individual keywords (fuzzy fallback)
+            // e.g. "statsiun kiara condong" → search "kiara condong" 
+            const words = location.trim().split(/\s+/).filter((w: string) => w.length >= 3);
+            
+            if (words.length >= 2) {
+              // Try dropping the first word (often misspelled category word like "statsiun")
+              const fallbackQuery = words.slice(1).join(' ');
+              const fallbackRes = await fetch(
+                `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(fallbackQuery)}&limit=6&addressdetails=1`,
+                { headers }
+              );
+              
+              if (fallbackRes.ok) {
+                const fallbackData = await fallbackRes.json();
+                
+                if (fallbackData && fallbackData.length > 0) {
+                  setSuggestions(fallbackData);
+                } else {
+                  // Strategy 3: Try each significant keyword individually  
+                  const longestWord = words.reduce((a: string, b: string) => a.length >= b.length ? a : b);
+                  const keywordRes = await fetch(
+                    `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(longestWord)}&limit=6&countrycodes=id&addressdetails=1`,
+                    { headers }
+                  );
+                  
+                  if (keywordRes.ok) {
+                    const keywordData = await keywordRes.json();
+                    setSuggestions(keywordData || []);
+                  }
+                }
+              }
+            } else {
+              setSuggestions([]);
+            }
+          }
         }
       } catch (err) {
         console.error('Error fetching location suggestions:', err);
       } finally {
         setSearchLoading(false);
       }
-    }, 400); // 400ms debounce
+    }, 400);
 
     return () => clearTimeout(timer);
   }, [location]);
@@ -721,12 +762,12 @@ export default function RundownPage() {
                 </div>
               )}
 
-              {/* Fallback hint: search on Google Maps if location is not found */}
+              {/* Fallback hint: search on Google Maps if no suggestions found */}
               {location.length >= 3 && suggestions.length === 0 && !searchLoading && (
-                <div className="flex items-center gap-2 mt-1.5 p-2.5 rounded-xl bg-amber-50 border border-amber-100">
-                  <AlertCircle size={13} className="text-amber-500 shrink-0" />
-                  <p className="text-[10px] text-amber-700 flex-1">
-                    Lokasi tidak ditemukan di database? Tidak apa-apa, teks yang Anda ketik tetap tersimpan. Atau cari di Google Maps:
+                <div className="flex items-center gap-2 mt-1.5 p-2.5 rounded-xl bg-[oklch(0.96_0.01_220)] border border-[oklch(0.90_0.02_220)]">
+                  <MapPin size={13} className="text-[oklch(0.55_0.06_210)] shrink-0" />
+                  <p className="text-[10px] text-[oklch(0.35_0.03_220)] flex-1">
+                    Teks lokasi Anda tetap tersimpan. Coba verifikasi atau salin nama lengkap dari Google Maps:
                   </p>
                   <a
                     href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`}
@@ -734,13 +775,13 @@ export default function RundownPage() {
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1 text-[10px] font-bold text-[oklch(0.38_0.06_210)] hover:underline shrink-0 cursor-pointer"
                   >
-                    <ExternalLink size={11} /> Google Maps
+                    <ExternalLink size={11} /> Buka Maps
                   </a>
                 </div>
               )}
 
               <p className="text-[10px] text-[oklch(0.48_0.01_40)] mt-1">
-                💡 Ketik langsung nama tempat yang Anda inginkan. Jika muncul saran, pilih salah satu. Jika tidak, teks Anda tetap tersimpan.
+                💡 Ketik nama tempat. Rekomendasi akan muncul otomatis, termasuk lokasi mirip jika ejaan kurang tepat.
               </p>
             </div>
 
