@@ -324,110 +324,109 @@ export default function ProfilePage() {
                   </div>
                 </div>
 
-                {/* Avatar Picker Widget */}
-                <div className="space-y-2.5 pt-4 border-t border-[oklch(0.90_0.008_70)]/60">
-                  <Label className="text-xs font-bold text-[oklch(0.22_0.01_40)] block">Pilih Foto Profil (Avatar)</Label>
-                  <div className="flex gap-4 items-center">
-                    {PRESETS.map((preset) => {
-                      const isSelected = selectedAvatar === preset.url && !customAvatar;
-                      return (
-                        <button
-                          key={preset.name}
-                          type="button"
-                          disabled={!isEditing}
-                          onClick={() => {
-                            setSelectedAvatar(preset.url);
-                            setCustomAvatar('');
-                          }}
-                          className={`w-12 h-12 rounded-full overflow-hidden border-2 bg-gradient-to-tr from-amber-50 to-orange-100 p-0.5 transition-all ${
-                            isSelected ? 'border-[oklch(0.38_0.06_210)] scale-110 shadow' : 'border-transparent opacity-70 hover:opacity-100'
-                          } ${!isEditing ? 'cursor-not-allowed opacity-55' : 'cursor-pointer'}`}
-                          title={preset.name}
-                        >
-                          <img src={preset.url} alt={preset.name} className="w-full h-full object-cover" />
-                        </button>
-                      );
-                    })}
-                  </div>
-                  
-                  <div className="space-y-1">
-                    <Label htmlFor="custom-avatar" className="text-[10px] text-[oklch(0.48_0.01_40)] font-medium">Atau gunakan URL gambar sendiri:</Label>
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[oklch(0.48_0.01_40)]">
-                        <LinkIcon size={13} />
-                      </span>
-                      <Input 
-                        id="custom-avatar"
-                        disabled={!isEditing}
-                        placeholder="https://example.com/avatar.jpg"
-                        value={customAvatar}
-                        onChange={(e) => setCustomAvatar(e.target.value)}
-                        className={`pl-9 h-9 rounded-xl text-xs border-[oklch(0.90_0.008_70)] ${!isEditing ? 'bg-[oklch(0.98_0.006_70)] cursor-not-allowed opacity-80' : ''}`}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Password Fields */}
-                <div className="pt-4 border-t border-[oklch(0.90_0.008_70)]/60 space-y-4">
-                  <h4 className="font-heading text-sm font-bold text-[oklch(0.22_0.01_40)]">Ubah Password (Opsional)</h4>
-                  
-                  <div className="space-y-1.5">
-                    <Label htmlFor="oldPassword" className="text-xs font-semibold text-[oklch(0.22_0.01_40)]">Password Lama</Label>
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[oklch(0.48_0.01_40)]">
-                        <Lock size={15} />
-                      </span>
-                      <Input
-                        id="oldPassword"
-                        type="password"
-                        disabled={!isEditing}
-                        placeholder="••••••"
-                        value={oldPassword}
-                        onChange={(e) => setOldPassword(e.target.value)}
-                        className={`pl-9 rounded-xl border-[oklch(0.90_0.008_70)] text-xs h-10 focus-visible:ring-[oklch(0.70_0.08_40)] focus-visible:border-[oklch(0.70_0.08_40)] ${!isEditing ? 'bg-[oklch(0.98_0.006_70)] cursor-not-allowed opacity-80' : ''}`}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-1.5">
-                      <Label htmlFor="newPassword" className="text-xs font-semibold text-[oklch(0.22_0.01_40)]">Password Baru</Label>
-                      <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[oklch(0.48_0.01_40)]">
-                          <Lock size={15} />
-                        </span>
-                        <Input
-                          id="newPassword"
-                          type="password"
-                          disabled={!isEditing}
-                          placeholder="Minimal 6 karakter"
-                          value={newPassword}
-                          onChange={(e) => setNewPassword(e.target.value)}
-                          className={`pl-9 rounded-xl border-[oklch(0.90_0.008_70)] text-xs h-10 focus-visible:ring-[oklch(0.70_0.08_40)] focus-visible:border-[oklch(0.70_0.08_40)] ${!isEditing ? 'bg-[oklch(0.98_0.006_70)] cursor-not-allowed opacity-80' : ''}`}
-                        />
+                {isEditing && (
+                  <>
+                    {/* Avatar Picker Widget */}
+                    <div className="space-y-2.5 pt-4 border-t border-[oklch(0.90_0.008_70)]/60">
+                      <Label className="text-xs font-bold text-[oklch(0.22_0.01_40)] block">Pilih Foto Profil (Avatar)</Label>
+                      <div className="flex gap-4 items-center">
+                        {PRESETS.map((preset) => {
+                          const isSelected = selectedAvatar === preset.url && !customAvatar;
+                          return (
+                            <button
+                              key={preset.name}
+                              type="button"
+                              onClick={() => {
+                                setSelectedAvatar(preset.url);
+                                setCustomAvatar('');
+                              }}
+                              className={`w-12 h-12 rounded-full overflow-hidden border-2 bg-gradient-to-tr from-amber-50 to-orange-100 p-0.5 transition-all cursor-pointer ${
+                                isSelected ? 'border-[oklch(0.38_0.06_210)] scale-110 shadow' : 'border-transparent opacity-70 hover:opacity-100'
+                              }`}
+                              title={preset.name}
+                            >
+                              <img src={preset.url} alt={preset.name} className="w-full h-full object-cover" />
+                            </button>
+                          );
+                        })}
+                      </div>
+                      
+                      <div className="space-y-1">
+                        <Label htmlFor="custom-avatar" className="text-[10px] text-[oklch(0.48_0.01_40)] font-medium">Atau gunakan URL gambar sendiri:</Label>
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[oklch(0.48_0.01_40)]">
+                            <LinkIcon size={13} />
+                          </span>
+                          <Input 
+                            id="custom-avatar"
+                            placeholder="https://example.com/avatar.jpg"
+                            value={customAvatar}
+                            onChange={(e) => setCustomAvatar(e.target.value)}
+                            className="pl-9 h-9 rounded-xl text-xs border-[oklch(0.90_0.008_70)]"
+                          />
+                        </div>
                       </div>
                     </div>
 
-                    <div className="space-y-1.5">
-                      <Label htmlFor="confirmPassword" className="text-xs font-semibold text-[oklch(0.22_0.01_40)]">Konfirmasi Password Baru</Label>
-                      <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[oklch(0.48_0.01_40)]">
-                          <Lock size={15} />
-                        </span>
-                        <Input
-                          id="confirmPassword"
-                          type="password"
-                          disabled={!isEditing}
-                          placeholder="Ulangi password baru"
-                          value={confirmPassword}
-                          onChange={(e) => setConfirmPassword(e.target.value)}
-                          className={`pl-9 rounded-xl border-[oklch(0.90_0.008_70)] text-xs h-10 focus-visible:ring-[oklch(0.70_0.08_40)] focus-visible:border-[oklch(0.70_0.08_40)] ${!isEditing ? 'bg-[oklch(0.98_0.006_70)] cursor-not-allowed opacity-80' : ''}`}
-                        />
+                    {/* Password Fields */}
+                    <div className="pt-4 border-t border-[oklch(0.90_0.008_70)]/60 space-y-4">
+                      <h4 className="font-heading text-sm font-bold text-[oklch(0.22_0.01_40)]">Ubah Password (Opsional)</h4>
+                      
+                      <div className="space-y-1.5">
+                        <Label htmlFor="oldPassword" className="text-xs font-semibold text-[oklch(0.22_0.01_40)]">Password Lama</Label>
+                        <div className="relative">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[oklch(0.48_0.01_40)]">
+                            <Lock size={15} />
+                          </span>
+                          <Input
+                            id="oldPassword"
+                            type="password"
+                            placeholder="••••••"
+                            value={oldPassword}
+                            onChange={(e) => setOldPassword(e.target.value)}
+                            className="pl-9 rounded-xl border-[oklch(0.90_0.008_70)] text-xs h-10 focus-visible:ring-[oklch(0.70_0.08_40)] focus-visible:border-[oklch(0.70_0.08_40)]"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                          <Label htmlFor="newPassword" className="text-xs font-semibold text-[oklch(0.22_0.01_40)]">Password Baru</Label>
+                          <div className="relative">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[oklch(0.48_0.01_40)]">
+                              <Lock size={15} />
+                            </span>
+                            <Input
+                              id="newPassword"
+                              type="password"
+                              placeholder="Minimal 6 karakter"
+                              value={newPassword}
+                              onChange={(e) => setNewPassword(e.target.value)}
+                              className="pl-9 rounded-xl border-[oklch(0.90_0.008_70)] text-xs h-10 focus-visible:ring-[oklch(0.70_0.08_40)] focus-visible:border-[oklch(0.70_0.08_40)]"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="space-y-1.5">
+                          <Label htmlFor="confirmPassword" className="text-xs font-semibold text-[oklch(0.22_0.01_40)]">Konfirmasi Password Baru</Label>
+                          <div className="relative">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[oklch(0.48_0.01_40)]">
+                              <Lock size={15} />
+                            </span>
+                            <Input
+                              id="confirmPassword"
+                              type="password"
+                              placeholder="Ulangi password baru"
+                              value={confirmPassword}
+                              onChange={(e) => setConfirmPassword(e.target.value)}
+                              className="pl-9 rounded-xl border-[oklch(0.90_0.008_70)] text-xs h-10 focus-visible:ring-[oklch(0.70_0.08_40)] focus-visible:border-[oklch(0.70_0.08_40)]"
+                            />
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </div>
+                  </>
+                )}
 
                 <div className="flex justify-end gap-3 pt-4 border-t border-[oklch(0.90_0.008_70)]/60">
                   {isEditing ? (
