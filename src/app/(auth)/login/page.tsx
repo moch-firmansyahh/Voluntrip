@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Compass, Lock, User, AlertCircle, Loader2 } from 'lucide-react';
+import { Compass, Lock, User, AlertCircle, Loader2, Eye, EyeOff } from 'lucide-react';
 import { Card, CardHeader, CardContent, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -114,13 +115,21 @@ export default function LoginPage() {
                 </span>
                 <Input
                   id="password"
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   placeholder="Masukkan password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10 h-11 rounded-xl border-[oklch(0.90_0.008_70)] focus-visible:ring-[oklch(0.64_0.22_30)] focus-visible:border-[oklch(0.64_0.22_30)] text-sm transition-all"
+                  className="pl-10 pr-10 h-11 rounded-xl border-[oklch(0.90_0.008_70)] focus-visible:ring-[oklch(0.64_0.22_30)] focus-visible:border-[oklch(0.64_0.22_30)] text-sm transition-all"
                   disabled={loading}
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[oklch(0.48_0.01_40)] hover:text-[oklch(0.22_0.01_40)] focus:outline-none cursor-pointer"
+                  disabled={loading}
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
               </div>
             </div>
           </CardContent>
