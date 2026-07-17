@@ -40,6 +40,14 @@ function formatDateString(dateStr: string) {
   });
 }
 
+function parseBudgetShorthand(value: string): number {
+  const num = parseFloat(value) || 0;
+  if (num > 0 && num < 10000) {
+    return num * 1000;
+  }
+  return num;
+}
+
 export default function TripsPage() {
   const [trips, setTrips] = useState<Trip[]>([]);
   const [loading, setLoading] = useState(true);
@@ -114,7 +122,7 @@ export default function TripsPage() {
           start_date: startDate,
           end_date: endDate,
           cover_image: coverImage || undefined,
-          budget_total: parseFloat(budgetTotal),
+          budget_total: parseBudgetShorthand(budgetTotal),
           expense_mode: expenseMode,
         }),
       });
@@ -162,7 +170,7 @@ export default function TripsPage() {
           start_date: startDate,
           end_date: endDate,
           cover_image: coverImage || undefined,
-          budget_total: parseFloat(budgetTotal),
+          budget_total: parseBudgetShorthand(budgetTotal),
           expense_mode: expenseMode,
         }),
       });
@@ -400,12 +408,17 @@ export default function TripsPage() {
                 <Input 
                   id="budget" 
                   type="number" 
-                  placeholder="5000000" 
+                  placeholder="Contoh: 2 (untuk 2rb) atau 2000 (untuk 2jt)" 
                   value={budgetTotal} 
                   onChange={(e) => setBudgetTotal(e.target.value)} 
                   className="rounded-xl border-[oklch(0.90_0.008_70)] text-xs"
                   required
                 />
+                {budgetTotal && parseFloat(budgetTotal) > 0 && (
+                  <p className="text-[10px] text-teal-600 font-bold mt-1">
+                    ✓ Otomatis menjadi: {formatIDR(parseBudgetShorthand(budgetTotal))}
+                  </p>
+                )}
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="mode" className="text-xs font-semibold">Model Budget</Label>
@@ -511,12 +524,17 @@ export default function TripsPage() {
                 <Input 
                   id="edit-budget" 
                   type="number" 
-                  placeholder="5000000" 
+                  placeholder="Contoh: 2 (untuk 2rb) atau 2000 (untuk 2jt)" 
                   value={budgetTotal} 
                   onChange={(e) => setBudgetTotal(e.target.value)} 
                   className="rounded-xl border-[oklch(0.90_0.008_70)] text-xs"
                   required
                 />
+                {budgetTotal && parseFloat(budgetTotal) > 0 && (
+                  <p className="text-[10px] text-teal-600 font-bold mt-1">
+                    ✓ Otomatis menjadi: {formatIDR(parseBudgetShorthand(budgetTotal))}
+                  </p>
+                )}
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="edit-mode" className="text-xs font-semibold">Model Budget</Label>
