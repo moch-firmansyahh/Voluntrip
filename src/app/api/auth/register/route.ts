@@ -3,51 +3,48 @@ import { cookies } from 'next/headers';
 import { sql } from '@/lib/supabase';
 import { hashPassword, signToken } from '@/lib/auth';
 
-// POST /api/auth/register - Register a new user with email, fullName, and avatarUrl
+// POST /api/auth/register - Register a new user
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { email, fullName, avatarUrl } = body;
+    const { email, firstName, lastName, username, password, avatarUrl } = body;
 
     // 1. Basic validation
-    if (!email || !fullName) {
-      return NextResponse.json({ error: 'Email dan Nama Lengkap wajib diisi' }, { status: 400 });
+    if (!email || !firstName || !lastName || !username || !password) {
+      return NextResponse.json({ error: 'Semua kolom wajib diisi' }, { status: 400 });
     }
 
-    // Check if email format is valid
     if (!email.includes('@')) {
       return NextResponse.json({ error: 'Format email tidak valid' }, { status: 400 });
     }
 
-    // 2. Check if email is already registered
+    if (password.length < 6) {
+      return NextResponse.json({ error: 'Password minimal 6 karakter' }, { status: 400 });
+    }
+
+    // 2. Check if username is already taken
+    const usernameCheck = await sql`
+      SELECT id FROM users WHERE username = ${username}
+    `;
+    if (usernameCheck.length > 0) {
+      return NextResponse.json({ error: 'Username sudah terdaftar' }, { status: 400 });
+    }
+
+    // 3. Check if email is already taken
     const emailCheck = await sql`
       SELECT id FROM users WHERE email = ${email}
     `;
     if (emailCheck.length > 0) {
-      return NextResponse.json({ error: 'Email sudah terdaftar. Silakan gunakan menu lupa password jika Anda lupa kredensial.' }, { status: 400 });
+      return NextResponse.json({ error: 'Email sudah terdaftar' }, { status: 400 });
     }
 
-    // 3. Auto-generate a unique username from the email address
-    let baseUsername = email.split('@')[0].toLowerCase().replace(/[^a-z0-9_]/g, '');
-    if (!baseUsername) baseUsername = 'user';
-    
-    let username = baseUsername;
-    let counter = 1;
-    while (true) {
-      const usernameCheck = await sql`
-        SELECT id FROM users WHERE username = ${username}
-      `;
-      if (usernameCheck.length === 0) {
-        break;
-      }
-      username = `${baseUsername}${counter}`;
-      counter++;
-    }
+    // 4. Combine first and last name into full name
+    const fullName = `${firstName} ${lastName}`.trim();
 
-    // 4. Set a default password of '123456' (user can change this in Profile settings)
-    const passwordHash = hashPassword('123456');
+    // 5. Hash the password
+    const passwordHash = hashPassword(password);
 
-    // 5. Insert new user into database
+    // 6. Insert new user into database
     const insertResult = await sql`
       INSERT INTO users (email, username, password_hash, full_name, avatar_url)
       VALUES (${email}, ${username}, ${passwordHash}, ${fullName}, ${avatarUrl || null})
@@ -56,7 +53,7 @@ export async function POST(request: Request) {
 
     const newUser = insertResult[0];
 
-    // 6. Sign JWT session token
+    // 7. Sign JWT session token
     const token = signToken({
       userId: newUser.id,
       username: newUser.username,
@@ -64,7 +61,7 @@ export async function POST(request: Request) {
       avatarUrl: newUser.avatar_url || undefined,
     });
 
-    // 7. Set HTTP-only session cookie (expires in 7 days)
+    // 8. Set HTTP-only session cookie (expires in 7 days)
     const cookieStore = await cookies();
     cookieStore.set('voluntrip_session', token, {
       httpOnly: true,
