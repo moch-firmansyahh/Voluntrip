@@ -229,9 +229,9 @@ export default function LoginPage() {
             
             <p className="text-xs text-[oklch(0.48_0.01_40)] text-center">
               Belum memiliki akun?{' '}
-              <Link href="/register" className="text-[oklch(0.70_0.08_40)] hover:underline font-bold">
+              <a href="/register" className="text-[oklch(0.70_0.08_40)] hover:underline font-bold cursor-pointer">
                 Daftar Sekarang
-              </Link>
+              </a>
             </p>
           </CardFooter>
         </form>

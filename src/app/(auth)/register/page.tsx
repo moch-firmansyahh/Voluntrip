@@ -195,9 +195,9 @@ export default function RegisterPage() {
             
             <p className="text-[11px] text-[oklch(0.48_0.01_40)] text-center">
               Sudah memiliki akun?{' '}
-              <Link href="/login" className="text-[oklch(0.70_0.08_40)] hover:underline font-bold">
+              <a href="/login" className="text-[oklch(0.70_0.08_40)] hover:underline font-bold cursor-pointer">
                 Masuk Di Sini
-              </Link>
+              </a>
             </p>
           </CardFooter>
         </form>
