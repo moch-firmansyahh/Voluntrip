@@ -5,12 +5,8 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { 
   User, 
-  Lock, 
   Mail, 
   FileText,
-  Link as LinkIcon,
-  Eye, 
-  EyeOff, 
   Loader2, 
   AlertCircle 
 } from 'lucide-react';
@@ -18,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardHeader, CardContent, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 
 const PRESETS = [
   { name: 'Explorer', url: 'https://api.dicebear.com/7.x/adventurer/svg?seed=Felix' },
@@ -32,42 +29,34 @@ export default function RegisterPage() {
   // Form states
   const [email, setEmail] = useState('');
   const [fullName, setFullName] = useState('');
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
   const [selectedAvatar, setSelectedAvatar] = useState(PRESETS[0].url);
-  const [customAvatar, setCustomAvatar] = useState('');
 
   // UI states
-  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // Registration success popup states
+  const [successOpen, setSuccessOpen] = useState(false);
+  const [generatedUsername, setGeneratedUsername] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
-    if (!email || !fullName || !username || !password) {
-      setError('Tolong isi semua kolom wajib');
-      return;
-    }
-
-    if (password.length < 6) {
-      setError('Password minimal harus 6 karakter');
+    if (!email || !fullName) {
+      setError('Tolong isi email dan nama lengkap');
       return;
     }
 
     setLoading(true);
     try {
-      const finalAvatar = customAvatar.trim() || selectedAvatar;
       const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email,
           fullName,
-          username,
-          password,
-          avatarUrl: finalAvatar
+          avatarUrl: selectedAvatar
         }),
       });
 
@@ -76,13 +65,21 @@ export default function RegisterPage() {
         throw new Error(data.error || 'Registrasi gagal');
       }
 
-      router.push('/dashboard');
-      router.refresh();
+      // Show success modal with login information
+      setGeneratedUsername(data.user.username);
+      setSuccessOpen(true);
+
     } catch (err: any) {
       setError(err.message);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSuccessClose = () => {
+    setSuccessOpen(false);
+    router.push('/dashboard');
+    router.refresh();
   };
 
   return (
@@ -94,7 +91,7 @@ export default function RegisterPage() {
       </div>
 
       {/* Registration Form Card */}
-      <Card className="w-full max-w-lg border-[oklch(0.90_0.008_70)] shadow-xl shadow-rose-50/40 bg-white rounded-3xl overflow-hidden">
+      <Card className="w-full max-w-md border-[oklch(0.90_0.008_70)] shadow-xl shadow-rose-50/40 bg-white rounded-3xl overflow-hidden animate-fade-in">
         <CardHeader className="space-y-1.5 pt-6 pb-4 px-8 bg-gradient-to-br from-orange-50/40 to-transparent">
           <CardTitle className="text-xl font-bold font-heading text-[oklch(0.22_0.01_40)]">Mulai Perjalanan Anda</CardTitle>
           <CardDescription className="text-xs text-[oklch(0.48_0.01_40)]">
@@ -133,77 +130,25 @@ export default function RegisterPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {/* Full Name Input */}
-              <div className="space-y-1.5">
-                <Label htmlFor="fullName" className="text-xs font-semibold text-[oklch(0.22_0.01_40)]">
-                  Nama Lengkap
-                </Label>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[oklch(0.48_0.01_40)]">
-                    <FileText size={15} />
-                  </span>
-                  <Input
-                    id="fullName"
-                    type="text"
-                    placeholder="Nama Lengkap Anda"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    className="pl-10 h-10 rounded-xl border-[oklch(0.90_0.008_70)] text-xs focus-visible:ring-[oklch(0.70_0.08_40)] focus-visible:border-[oklch(0.70_0.08_40)]"
-                    required
-                    disabled={loading}
-                  />
-                </div>
-              </div>
-
-              {/* Username Input */}
-              <div className="space-y-1.5">
-                <Label htmlFor="username" className="text-xs font-semibold text-[oklch(0.22_0.01_40)]">
-                  Username
-                </Label>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-[oklch(0.48_0.01_40)] font-bold">@</span>
-                  <Input
-                    id="username"
-                    type="text"
-                    placeholder="username"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    className="pl-8 h-10 rounded-xl border-[oklch(0.90_0.008_70)] text-xs focus-visible:ring-[oklch(0.70_0.08_40)] focus-visible:border-[oklch(0.70_0.08_40)]"
-                    required
-                    disabled={loading}
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Password Input */}
+            {/* Full Name Input */}
             <div className="space-y-1.5">
-              <Label htmlFor="password" className="text-xs font-semibold text-[oklch(0.22_0.01_40)]">
-                Password
+              <Label htmlFor="fullName" className="text-xs font-semibold text-[oklch(0.22_0.01_40)]">
+                Nama Lengkap
               </Label>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[oklch(0.48_0.01_40)]">
-                  <Lock size={15} />
+                  <FileText size={15} />
                 </span>
                 <Input
-                  id="password"
-                  type={showPassword ? 'text' : 'password'}
-                  placeholder="Minimal 6 karakter"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10 pr-10 h-10 rounded-xl border-[oklch(0.90_0.008_70)] text-xs focus-visible:ring-[oklch(0.70_0.08_40)] focus-visible:border-[oklch(0.70_0.08_40)]"
+                  id="fullName"
+                  type="text"
+                  placeholder="Nama Lengkap Anda"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  className="pl-10 h-10 rounded-xl border-[oklch(0.90_0.008_70)] text-xs focus-visible:ring-[oklch(0.70_0.08_40)] focus-visible:border-[oklch(0.70_0.08_40)]"
                   required
                   disabled={loading}
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[oklch(0.48_0.01_40)] hover:text-[oklch(0.22_0.01_40)] focus:outline-none cursor-pointer"
-                  disabled={loading}
-                >
-                  {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
-                </button>
               </div>
             </div>
 
@@ -213,15 +158,12 @@ export default function RegisterPage() {
               
               <div className="flex gap-4 items-center py-1">
                 {PRESETS.map((preset) => {
-                  const isSelected = selectedAvatar === preset.url && !customAvatar;
+                  const isSelected = selectedAvatar === preset.url;
                   return (
                     <button
                       key={preset.name}
                       type="button"
-                      onClick={() => {
-                        setSelectedAvatar(preset.url);
-                        setCustomAvatar('');
-                      }}
+                      onClick={() => setSelectedAvatar(preset.url)}
                       className={`w-12 h-12 rounded-full overflow-hidden border-2 bg-gradient-to-tr from-amber-50 to-orange-100 p-0.5 transition-all cursor-pointer ${
                         isSelected ? 'border-[oklch(0.38_0.06_210)] scale-110 shadow' : 'border-transparent opacity-70 hover:opacity-100'
                       }`}
@@ -232,30 +174,13 @@ export default function RegisterPage() {
                   );
                 })}
               </div>
-
-              {/* Custom Avatar URL Field */}
-              <div className="space-y-1">
-                <Label htmlFor="custom-avatar" className="text-[10px] text-[oklch(0.48_0.01_40)] font-medium">Atau gunakan URL gambar sendiri (opsional):</Label>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[oklch(0.48_0.01_40)]">
-                    <LinkIcon size={12} />
-                  </span>
-                  <Input 
-                    id="custom-avatar"
-                    placeholder="https://example.com/avatar.jpg"
-                    value={customAvatar}
-                    onChange={(e) => setCustomAvatar(e.target.value)}
-                    className="pl-8 h-8 rounded-lg text-[10px] border-[oklch(0.90_0.008_70)]"
-                  />
-                </div>
-              </div>
             </div>
           </CardContent>
 
           <CardFooter className="px-8 pt-2 pb-6 flex flex-col gap-4">
             <Button
               type="submit"
-              className="w-full h-10 rounded-xl bg-[oklch(0.70_0.08_40)] text-white hover:bg-[oklch(0.70_0.08_40)]/90 font-bold text-xs shadow"
+              className="w-full h-10 rounded-xl bg-[oklch(0.70_0.08_40)] text-white hover:bg-[oklch(0.70_0.08_40)]/90 font-bold text-xs shadow-md shadow-rose-100"
               disabled={loading}
             >
               {loading ? (
@@ -277,6 +202,44 @@ export default function RegisterPage() {
           </CardFooter>
         </form>
       </Card>
+
+      {/* Success Registration Dialog Info */}
+      <Dialog open={successOpen} onOpenChange={(open) => { if (!open) handleSuccessClose(); }}>
+        <DialogContent className="max-w-md bg-white border-[oklch(0.90_0.008_70)] rounded-3xl p-6">
+          <DialogHeader>
+            <DialogTitle className="font-heading text-lg font-bold text-teal-600">
+              Registrasi Berhasil! 🎉
+            </DialogTitle>
+            <DialogDescription className="text-xs text-[oklch(0.48_0.01_40)]">
+              Akun Anda telah berhasil dibuat. Silakan simpan informasi akun login Anda di bawah ini:
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="bg-[oklch(0.98_0.006_70)] p-4 rounded-2xl border border-[oklch(0.90_0.008_70)] space-y-3 my-2">
+            <div className="flex justify-between items-center text-xs">
+              <span className="text-[oklch(0.48_0.01_40)] font-medium">Username Anda:</span>
+              <span className="font-bold text-[oklch(0.22_0.01_40)]">@{generatedUsername}</span>
+            </div>
+            <div className="flex justify-between items-center text-xs">
+              <span className="text-[oklch(0.48_0.01_40)] font-medium">Password Default:</span>
+              <span className="font-bold text-teal-600 bg-teal-50 px-2 py-0.5 rounded-lg border border-teal-100">123456</span>
+            </div>
+            <p className="text-[10px] text-amber-600 font-medium pt-1">
+              ⚠️ Anda dapat mengubah password dan username Anda kapan saja di menu Profile Settings.
+            </p>
+          </div>
+
+          <DialogFooter className="pt-2">
+            <Button 
+              type="button" 
+              onClick={handleSuccessClose}
+              className="w-full rounded-xl bg-[oklch(0.70_0.08_40)] text-white hover:bg-[oklch(0.70_0.08_40)]/90 text-xs font-bold shadow"
+            >
+              Masuk ke Dashboard
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

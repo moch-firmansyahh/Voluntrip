@@ -3,39 +3,49 @@ import { cookies } from 'next/headers';
 import { sql } from '@/lib/supabase';
 import { hashPassword, signToken } from '@/lib/auth';
 
-// POST /api/auth/register - Register a new user
+// POST /api/auth/register - Register a new user with email, fullName, and avatarUrl
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { email, username, password, fullName, avatarUrl } = body;
+    const { email, fullName, avatarUrl } = body;
 
     // 1. Basic validation
-    if (!email || !username || !password || !fullName) {
-      return NextResponse.json({ error: 'Semua kolom wajib diisi' }, { status: 400 });
+    if (!email || !fullName) {
+      return NextResponse.json({ error: 'Email dan Nama Lengkap wajib diisi' }, { status: 400 });
     }
 
-    if (password.length < 6) {
-      return NextResponse.json({ error: 'Password minimal 6 karakter' }, { status: 400 });
+    // Check if email format is valid
+    if (!email.includes('@')) {
+      return NextResponse.json({ error: 'Format email tidak valid' }, { status: 400 });
     }
 
-    // 2. Check if username is already taken
-    const usernameCheck = await sql`
-      SELECT id FROM users WHERE username = ${username}
-    `;
-    if (usernameCheck.length > 0) {
-      return NextResponse.json({ error: 'Username sudah terdaftar' }, { status: 400 });
-    }
-
-    // 3. Check if email is already taken
+    // 2. Check if email is already registered
     const emailCheck = await sql`
       SELECT id FROM users WHERE email = ${email}
     `;
     if (emailCheck.length > 0) {
-      return NextResponse.json({ error: 'Email sudah terdaftar' }, { status: 400 });
+      return NextResponse.json({ error: 'Email sudah terdaftar. Silakan gunakan menu lupa password jika Anda lupa kredensial.' }, { status: 400 });
     }
 
-    // 4. Hash the password
-    const passwordHash = hashPassword(password);
+    // 3. Auto-generate a unique username from the email address
+    let baseUsername = email.split('@')[0].toLowerCase().replace(/[^a-z0-9_]/g, '');
+    if (!baseUsername) baseUsername = 'user';
+    
+    let username = baseUsername;
+    let counter = 1;
+    while (true) {
+      const usernameCheck = await sql`
+        SELECT id FROM users WHERE username = ${username}
+      `;
+      if (usernameCheck.length === 0) {
+        break;
+      }
+      username = `${baseUsername}${counter}`;
+      counter++;
+    }
+
+    // 4. Set a default password of '123456' (user can change this in Profile settings)
+    const passwordHash = hashPassword('123456');
 
     // 5. Insert new user into database
     const insertResult = await sql`
