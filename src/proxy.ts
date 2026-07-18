@@ -16,7 +16,7 @@ export function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const isPublicRoute = pathname === '/login' || pathname.startsWith('/share');
+  const isPublicRoute = pathname === '/login' || pathname === '/register' || pathname.startsWith('/share');
   const isApiRoute = pathname.startsWith('/api');
   const isApiAuthRoute = pathname.startsWith('/api/auth');
   const isPublicApiRoute = pathname.startsWith('/api/share') && request.method === 'GET'; // GET share is public
@@ -43,8 +43,8 @@ export function proxy(request: NextRequest) {
     }
   }
 
-  // Redirect to dashboard if logged-in user tries to access /login or /
-  if (pathname === '/login' || pathname === '/') {
+  // Redirect to dashboard if logged-in user tries to access /login, /register, or /
+  if (pathname === '/login' || pathname === '/register' || pathname === '/') {
     if (isSessionValid) {
       return NextResponse.redirect(new URL('/dashboard', request.url));
     }
