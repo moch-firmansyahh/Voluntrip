@@ -15,10 +15,12 @@ import {
   ArrowLeft,
   ArrowRight,
   Loader2,
-  AlertCircle
+  AlertCircle,
+  Map,
+  ExternalLink
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 
 interface Trip {
@@ -103,6 +105,195 @@ export default function TripDetailPage() {
       fetchTripData();
     }
   }, [tripId]);
+
+  // Route Geocoding Coordinates State
+  const [routeCoords, setRouteCoords] = useState<{ name: string; lat: number; lon: number }[]>([]);
+  const [mapLoading, setMapLoading] = useState(false);
+
+  // Helper to extract unique sequential locations
+  const getItineraryRoute = () => {
+    const route: string[] = [];
+    const sortedDays = [...rundown].sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0));
+
+    sortedDays.forEach(day => {
+      if (day.activities) {
+        const sortedActivities = [...day.activities].sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0));
+        sortedActivities.forEach(act => {
+          if (act.location && act.location.trim()) {
+            route.push(act.location.trim());
+          }
+        });
+      }
+    });
+
+    return route.filter((loc, idx) => idx === 0 || loc !== route[idx - 1]);
+  };
+
+  const getGoogleMapsDirUrl = () => {
+    const locations = getItineraryRoute();
+    if (locations.length === 0) return '';
+    if (locations.length === 1) {
+      return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(locations[0])}`;
+    }
+    const origin = encodeURIComponent(locations[0]);
+    const destination = encodeURIComponent(locations[locations.length - 1]);
+    const waypoints = locations.slice(1, -1).map(loc => encodeURIComponent(loc)).join('|');
+    
+    let url = `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}`;
+    if (waypoints) {
+      url += `&waypoints=${waypoints}`;
+    }
+    return url;
+  };
+
+  // Fetch coordinates for unique locations
+  useEffect(() => {
+    const locations = getItineraryRoute();
+    if (locations.length === 0) {
+      setRouteCoords([]);
+      return;
+    }
+
+    const fetchCoords = async () => {
+      setMapLoading(true);
+      const coordsList: { name: string; lat: number; lon: number }[] = [];
+      const targetLocations = locations.slice(0, 10); // Limit to first 10 locations to respect API limits
+
+      try {
+        const promises = targetLocations.map(async (loc) => {
+          try {
+            const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(loc)}&limit=1`);
+            if (res.ok) {
+              const data = await res.json();
+              if (data && data[0]) {
+                return {
+                  name: loc,
+                  lat: parseFloat(data[0].lat),
+                  lon: parseFloat(data[0].lon)
+                };
+              }
+            }
+          } catch (e) {
+            console.error('Error geocoding location:', loc, e);
+          }
+          return null;
+        });
+
+        const results = await Promise.all(promises);
+        results.forEach(res => {
+          if (res) coordsList.push(res);
+        });
+        setRouteCoords(coordsList);
+      } catch (err) {
+        console.error('Error fetching route coordinates:', err);
+      } finally {
+        setMapLoading(false);
+      }
+    };
+
+    fetchCoords();
+  }, [rundown]);
+
+  // Leaflet Dynamic Integration and Initialization
+  useEffect(() => {
+    if (routeCoords.length === 0) return;
+
+    if (!document.getElementById('leaflet-css')) {
+      const link = document.createElement('link');
+      link.id = 'leaflet-css';
+      link.rel = 'stylesheet';
+      link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+      document.head.appendChild(link);
+    }
+
+    let script = document.getElementById('leaflet-js') as HTMLScriptElement;
+    if (!script) {
+      script = document.createElement('script');
+      script.id = 'leaflet-js';
+      script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+      document.body.appendChild(script);
+    }
+
+    const initMap = () => {
+      // @ts-ignore
+      const L = window.L;
+      if (!L) return;
+
+      // @ts-ignore
+      if (window.tripOverviewMap) {
+        // @ts-ignore
+        window.tripOverviewMap.remove();
+      }
+
+      const mapContainer = document.getElementById('trip-route-map');
+      if (!mapContainer) return;
+
+      // @ts-ignore
+      const map = L.map('trip-route-map', { zoomControl: true });
+      // @ts-ignore
+      window.tripOverviewMap = map;
+
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+        subdomains: 'abcd',
+        maxZoom: 20
+      }).addTo(map);
+
+      const points: any[] = [];
+
+      routeCoords.forEach((coord, index) => {
+        const markerLatLng = [coord.lat, coord.lon];
+        points.push(markerLatLng);
+
+        const customIcon = L.divIcon({
+          className: 'custom-map-marker',
+          html: `<div class="w-6 h-6 rounded-full bg-[oklch(0.38_0.06_210)] border-2 border-white flex items-center justify-center text-white text-[10px] font-bold shadow">${index + 1}</div>`,
+          iconSize: [24, 24],
+          iconAnchor: [12, 12]
+        });
+
+        L.marker(markerLatLng, { icon: customIcon })
+          .addTo(map)
+          .bindPopup(`<div class="p-1 font-sans text-xs"><strong>${index + 1}. ${coord.name}</strong></div>`);
+      });
+
+      if (points.length >= 2) {
+        L.polyline(points, {
+          color: '#C79E8D',
+          weight: 4,
+          dashArray: '6, 6',
+          opacity: 0.85
+        }).addTo(map);
+      }
+
+      if (points.length > 0) {
+        map.fitBounds(L.latLngBounds(points), { padding: [30, 30] });
+      }
+    };
+
+    if (script) {
+      if (script.getAttribute('data-loaded') === 'true') {
+        initMap();
+      } else {
+        script.addEventListener('load', () => {
+          script.setAttribute('data-loaded', 'true');
+          initMap();
+        });
+      }
+    }
+
+    const resizeTimer = setTimeout(() => {
+      // @ts-ignore
+      if (window.tripOverviewMap) {
+        // @ts-ignore
+        window.tripOverviewMap.invalidateSize();
+      }
+    }, 500);
+
+    return () => {
+      clearTimeout(resizeTimer);
+    };
+  }, [routeCoords]);
 
   // Toggle Sharing
   const handleToggleShare = async () => {
@@ -323,6 +514,76 @@ export default function TripDetailPage() {
                 </div>
               </Card>
             </Link>
+
+            {/* Travel Route Map Card */}
+            <Card className="rounded-3xl border-[oklch(0.90_0.008_70)] shadow-sm bg-white overflow-hidden flex flex-col">
+              <CardHeader className="pb-3 border-b border-[oklch(0.90_0.008_70)]/40 flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle className="font-heading text-base font-bold text-[oklch(0.22_0.01_40)] flex items-center gap-2">
+                    <Map size={18} className="text-[oklch(0.70_0.08_40)]" />
+                    Alur Perjalanan Trip
+                  </CardTitle>
+                  <p className="text-[10px] text-[oklch(0.48_0.01_40)] mt-0.5">Rute visual menghubungkan lokasi-lokasi itinerary Anda.</p>
+                </div>
+                {routeCoords.length >= 2 && (
+                  <a
+                    href={getGoogleMapsDirUrl()}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-orange-50 hover:bg-orange-100/80 text-[10px] font-bold text-orange-600 border border-orange-100 transition-colors cursor-pointer"
+                  >
+                    <ExternalLink size={12} />
+                    Petunjuk Google Maps
+                  </a>
+                )}
+              </CardHeader>
+
+              <CardContent className="p-0 relative flex-1 min-h-[300px]">
+                {mapLoading ? (
+                  <div className="absolute inset-0 bg-slate-50/50 backdrop-blur-sm flex flex-col items-center justify-center gap-2 z-10">
+                    <Loader2 className="animate-spin text-[oklch(0.70_0.08_40)]" size={24} />
+                    <span className="text-xs text-[oklch(0.48_0.01_40)] font-medium">Memetakan rute perjalanan...</span>
+                  </div>
+                ) : null}
+
+                {routeCoords.length === 0 ? (
+                  <div className="absolute inset-0 bg-slate-50/30 flex flex-col items-center justify-center text-center p-6 space-y-2">
+                    <div className="w-12 h-12 rounded-full bg-[oklch(0.92_0.008_240)] flex items-center justify-center text-[oklch(0.38_0.06_210)]">
+                      <MapPin size={22} />
+                    </div>
+                    <h5 className="font-bold text-sm text-[oklch(0.22_0.01_40)]">Belum Ada Lokasi Rute</h5>
+                    <p className="text-xs text-[oklch(0.48_0.01_40)] max-w-sm leading-relaxed">
+                      Tambahkan kegiatan yang berisi nama lokasi di menu **Itinerary** untuk menampilkan visualisasi alur rute perjalanan di sini.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="w-full h-full min-h-[300px] relative">
+                    <div id="trip-route-map" className="w-full h-full min-h-[300px] rounded-b-3xl" />
+                    
+                    {/* Floating Info Overlay showing the Route stops count */}
+                    <div className="absolute bottom-4 left-4 z-[400] bg-white/90 backdrop-blur-sm border border-[oklch(0.90_0.008_70)] px-3 py-2 rounded-2xl shadow-sm text-[10px] text-[oklch(0.22_0.01_40)] font-semibold flex items-center gap-2">
+                      <div className="w-2.5 h-2.5 rounded-full bg-teal-500 animate-pulse" />
+                      <span>{routeCoords.length} Pemberhentian Terdeteksi</span>
+                    </div>
+
+                    <style>{`
+                      .leaflet-popup-content-wrapper {
+                        border-radius: 16px !important;
+                        border: 1px solid oklch(0.90 0.008 70) !important;
+                        box-shadow: 0 4px 12px -2px rgb(0 0 0 / 0.08) !important;
+                        padding: 2px !important;
+                      }
+                      .leaflet-popup-content {
+                        margin: 8px 12px !important;
+                      }
+                      .leaflet-popup-tip-container {
+                        display: none !important;
+                      }
+                    `}</style>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </div>
         </div>
 
