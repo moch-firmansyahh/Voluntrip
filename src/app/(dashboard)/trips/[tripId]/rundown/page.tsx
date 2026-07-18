@@ -375,15 +375,69 @@ export default function RundownPage() {
       return;
     }
 
+    let parsedCost = parseFloat(cost) || 0;
+    if (parsedCost > 0 && parsedCost < 10000) {
+      parsedCost = parsedCost * 1000;
+    }
+
+    const previousDays = [...days]; // Keep reference for rollback on error
+
+    // Optimistic Update
+    if (editingActivity) {
+      // Edit mode optimistic update
+      setDays(prevDays => prevDays.map(day => {
+        if (day.id === selectedDayId) {
+          return {
+            ...day,
+            activities: (day.activities || []).map(act => {
+              if (act.id === editingActivity.id) {
+                return {
+                  ...act,
+                  title,
+                  location: location || null,
+                  start_time: startTime + ':00',
+                  end_time: endTime + ':00',
+                  cost: parsedCost,
+                  note: note || null
+                };
+              }
+              return act;
+            })
+          };
+        }
+        return day;
+      }));
+    } else {
+      // Create mode optimistic update
+      const tempActivity: RundownActivity = {
+        id: `temp-${Date.now()}`,
+        rundown_day_id: selectedDayId,
+        title,
+        location: location || null,
+        start_time: startTime + ':00',
+        end_time: endTime + ':00',
+        cost: parsedCost,
+        note: note || null,
+        order_index: (days.find(d => d.id === selectedDayId)?.activities?.length || 0) + 1
+      };
+
+      setDays(prevDays => prevDays.map(day => {
+        if (day.id === selectedDayId) {
+          return {
+            ...day,
+            activities: [...(day.activities || []), tempActivity]
+          };
+        }
+        return day;
+      }));
+    }
+
+    setIsOpen(false); // Close dialog instantly for snappy responsiveness
     setFormLoading(true);
+
     try {
       const url = editingActivity ? `/api/rundown/${editingActivity.id}` : '/api/rundown';
       const method = editingActivity ? 'PUT' : 'POST';
-      
-      let parsedCost = parseFloat(cost) || 0;
-      if (parsedCost > 0 && parsedCost < 10000) {
-        parsedCost = parsedCost * 1000;
-      }
 
       const res = await fetch(url, {
         method,
@@ -401,10 +455,11 @@ export default function RundownPage() {
 
       if (!res.ok) throw new Error('Gagal menyimpan kegiatan');
       
-      setIsOpen(false);
-      fetchRundownData(true); // Silent background refresh (prevents screen flashes / lag)
+      // Silent refresh to reconcile the database-generated properties (like real UUIDs)
+      fetchRundownData(true);
     } catch (err: any) {
       alert(err.message);
+      setDays(previousDays); // Rollback on failure
     } finally {
       setFormLoading(false);
     }
@@ -416,16 +471,27 @@ export default function RundownPage() {
       'Hapus Agenda Kegiatan',
       'Apakah Anda yakin ingin menghapus agenda kegiatan ini?',
       async () => {
+        const previousDays = [...days]; // Keep reference for rollback
+
+        // Optimistically remove activity instantly
+        setDays(prevDays => prevDays.map(day => {
+          return {
+            ...day,
+            activities: (day.activities || []).filter(act => act.id !== activityId)
+          };
+        }));
+
         try {
           const res = await fetch(`/api/rundown/${activityId}`, { method: 'DELETE' });
           if (!res.ok) throw new Error('Gagal menghapus kegiatan');
           fetchRundownData(true); // Silent background refresh
         } catch (err: any) {
           alert(err.message);
+          setDays(previousDays); // Rollback on failure
         }
       }
     );
-  }, [fetchRundownData, showConfirm]);
+  }, [days, fetchRundownData, showConfirm]);
 
   // Delete Day
   const handleDeleteDay = (dayId: string, dayNumber: number) => {
@@ -433,12 +499,18 @@ export default function RundownPage() {
       'Hapus Hari Itinerary',
       `Apakah Anda yakin ingin menghapus Hari ${dayNumber} beserta seluruh kegiatannya? Durasi perjalanan Anda akan otomatis disesuaikan (berkurang 1 hari).`,
       async () => {
+        const previousDays = [...days]; // Keep reference for rollback
+
+        // Optimistically remove day instantly
+        setDays(prevDays => prevDays.filter(day => day.id !== dayId));
+
         try {
           const res = await fetch(`/api/rundown/day/${dayId}`, { method: 'DELETE' });
           if (!res.ok) throw new Error('Gagal menghapus hari');
           fetchRundownData(true); // Silent background refresh
         } catch (err: any) {
           alert(err.message);
+          setDays(previousDays); // Rollback on failure
         }
       }
     );
