@@ -30,9 +30,10 @@ import { RundownDay, RundownActivity } from '@/types/rundown';
 import {
   DndContext,
   DragEndEvent,
-  PointerSensor,
   useSensor,
-  useSensors
+  useSensors,
+  MouseSensor,
+  TouchSensor
 } from '@dnd-kit/core';
 import {
   SortableContext,
@@ -58,6 +59,28 @@ function formatDateString(dateStr: string) {
     month: 'long',
     year: 'numeric'
   });
+}
+
+// Helper to format time strings safely as HH:MM
+function formatTimeHHMM(timeStr: string): string {
+  if (!timeStr) return '08:00';
+  const parts = timeStr.split(':');
+  if (parts.length >= 2) {
+    const hh = parts[0].padStart(2, '0');
+    const mm = parts[1].padStart(2, '0');
+    return `${hh}:${mm}`;
+  }
+  return '08:00';
+}
+
+// Helper to format time strings safely as HH:MM:SS
+function formatTimeHHMMSS(timeStr: string): string {
+  if (!timeStr) return '08:00:00';
+  const parts = timeStr.split(':');
+  const hh = parts[0].padStart(2, '0');
+  const mm = (parts[1] || '00').padStart(2, '0');
+  const ss = (parts[2] || '00').padStart(2, '0');
+  return `${hh}:${mm}:${ss}`;
 }
 
 // SORTABLE TIMELINE CARD
@@ -290,12 +313,18 @@ export default function RundownEditorClient({ initialTrip, initialDays }: Rundow
     setSuggestions([]);
   };
 
-  const pointerSensor = useSensor(PointerSensor, {
+  const mouseSensor = useSensor(MouseSensor, {
     activationConstraint: {
       distance: 8,
     },
   });
-  const sensors = useSensors(pointerSensor);
+  const touchSensor = useSensor(TouchSensor, {
+    activationConstraint: {
+      delay: 300, // 300ms long press to start dragging on mobile
+      tolerance: 8, // Allow up to 8px drag tolerance during long press
+    },
+  });
+  const sensors = useSensors(mouseSensor, touchSensor);
 
   const fetchRundownData = useCallback(async (silent = false) => {
     try {
@@ -339,8 +368,8 @@ export default function RundownEditorClient({ initialTrip, initialDays }: Rundow
     setSelectedDayId(activity.rundown_day_id);
     setTitle(activity.title);
     setLocation(activity.location || '');
-    setStartTime(activity.start_time.substring(0, 5));
-    setEndTime(activity.end_time.substring(0, 5));
+    setStartTime(formatTimeHHMM(activity.start_time));
+    setEndTime(formatTimeHHMM(activity.end_time));
     setCost(activity.cost.toString());
     setNote(activity.note || '');
     setSuggestions([]);
@@ -375,8 +404,8 @@ export default function RundownEditorClient({ initialTrip, initialDays }: Rundow
                   ...act,
                   title,
                   location: location || null,
-                  start_time: startTime + ':00',
-                  end_time: endTime + ':00',
+                  start_time: formatTimeHHMMSS(startTime),
+                  end_time: formatTimeHHMMSS(endTime),
                   cost: parsedCost,
                   note: note || null
                 };
@@ -394,8 +423,8 @@ export default function RundownEditorClient({ initialTrip, initialDays }: Rundow
         rundown_day_id: selectedDayId,
         title,
         location: location || null,
-        start_time: startTime + ':00',
-        end_time: endTime + ':00',
+        start_time: formatTimeHHMMSS(startTime),
+        end_time: formatTimeHHMMSS(endTime),
         cost: parsedCost,
         note: note || null,
         order_index: (days.find(d => d.id === selectedDayId)?.activities?.length || 0) + 1,
@@ -435,7 +464,10 @@ export default function RundownEditorClient({ initialTrip, initialDays }: Rundow
         }),
       });
 
-      if (!res.ok) throw new Error('Gagal menyimpan kegiatan');
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Gagal menyimpan kegiatan');
+      }
       
       // Silent refresh to reconcile database fields
       fetchRundownData(true);

@@ -72,6 +72,9 @@ export async function PUT(
     const prevTrips = await sql`SELECT start_date, end_date FROM trips WHERE id = ${tripId}`;
     const prevTrip = prevTrips[0];
 
+    const prevStartStr = new Date(prevTrip.start_date).toISOString().split('T')[0];
+    const prevEndStr = new Date(prevTrip.end_date).toISOString().split('T')[0];
+
     // Update trip
     const trips = await sql`
       UPDATE trips SET
@@ -87,7 +90,7 @@ export async function PUT(
     `;
 
     // If dates changed, update or rebuild rundown days
-    if (prevTrip.start_date !== data.start_date || prevTrip.end_date !== data.end_date) {
+    if (prevStartStr !== data.start_date || prevEndStr !== data.end_date) {
       const start = new Date(data.start_date);
       const end = new Date(data.end_date);
       const diffTime = Math.abs(end.getTime() - start.getTime());
@@ -98,7 +101,7 @@ export async function PUT(
       const dayDates: string[] = [];
       for (let i = 0; i < diffDays; i++) {
         const dayDate = new Date(start);
-        dayDate.setDate(start.getDate() + i);
+        dayDate.setUTCDate(start.getUTCDate() + i);
         dayDates.push(dayDate.toISOString().split('T')[0]);
       }
 

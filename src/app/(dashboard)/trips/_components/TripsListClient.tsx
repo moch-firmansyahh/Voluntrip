@@ -140,13 +140,21 @@ export default function TripsListClient({ initialTrips }: TripsListClientProps) 
     }
   };
 
+function getLocalDateString(dateInput: Date | string): string {
+  const d = new Date(dateInput);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
   // Open Edit Dialog
   const openEditDialog = (trip: Trip) => {
     setSelectedTrip(trip);
     setName(trip.name);
     setDestination(trip.destination);
-    setStartDate(new Date(trip.start_date).toISOString().split('T')[0]);
-    setEndDate(new Date(trip.end_date).toISOString().split('T')[0]);
+    setStartDate(getLocalDateString(trip.start_date));
+    setEndDate(getLocalDateString(trip.end_date));
     setCoverImage(trip.cover_image || '');
     setBudgetTotal(trip.budget_total.toString());
     setExpenseMode(trip.expense_mode);

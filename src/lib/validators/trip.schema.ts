@@ -9,7 +9,7 @@ export const tripSchema = z.object({
   end_date: z.string().refine((val) => !isNaN(Date.parse(val)), {
     message: 'Invalid end date',
   }),
-  cover_image: z.string().url().optional().or(z.literal('')),
+  cover_image: z.string().optional().or(z.literal('')),
   budget_total: z.coerce.number().min(0, 'Budget must be a positive number'),
   expense_mode: z.enum(['per_trip', 'split']),
 }).refine((data) => {
