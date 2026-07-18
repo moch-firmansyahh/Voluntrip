@@ -47,7 +47,7 @@ export async function GET(request: Request) {
 
     // Fetch rundown activities
     const activities = await sql`
-      SELECT id, rundown_day_id, title, location, start_time, end_time, note, order_index, cost
+      SELECT id, rundown_day_id, title, location, start_time, end_time, note, order_index, cost, latitude, longitude
       FROM rundown_activities
       WHERE rundown_day_id = ANY(${dayIds})
       ORDER BY order_index ASC, start_time ASC
@@ -64,6 +64,30 @@ export async function GET(request: Request) {
     console.error('GET /api/rundown error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
+}
+
+// Server-side Geocoding helper using Nominatim
+async function geocodeLocation(locationName: string): Promise<{ lat: number; lon: number } | null> {
+  if (!locationName) return null;
+  try {
+    const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(locationName)}&limit=1`, {
+      headers: {
+        'User-Agent': 'Voluntrip-App/1.0 (contact@voluntrip.com)'
+      }
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data[0]) {
+        return {
+          lat: parseFloat(data[0].lat),
+          lon: parseFloat(data[0].lon)
+        };
+      }
+    }
+  } catch (error) {
+    console.error('Server geocoding error for location:', locationName, error);
+  }
+  return null;
 }
 
 // POST /api/rundown - Add a new activity
@@ -106,12 +130,17 @@ export async function POST(request: Request) {
     `;
     const nextIndex = (maxOrder[0]?.max_idx !== null ? maxOrder[0].max_idx : -1) + 1;
 
+    // Geocode location on server
+    const coords = data.location ? await geocodeLocation(data.location) : null;
+    const latitude = coords ? coords.lat : null;
+    const longitude = coords ? coords.lon : null;
+
     // Insert activity
     const activities = await sql`
       INSERT INTO rundown_activities (
-        rundown_day_id, title, location, start_time, end_time, note, order_index, cost
+        rundown_day_id, title, location, start_time, end_time, note, order_index, cost, latitude, longitude
       ) VALUES (
-        ${rundownDayId}, ${data.title}, ${data.location || null}, ${data.start_time}, ${data.end_time}, ${data.note || null}, ${nextIndex}, ${data.cost}
+        ${rundownDayId}, ${data.title}, ${data.location || null}, ${data.start_time}, ${data.end_time}, ${data.note || null}, ${nextIndex}, ${data.cost}, ${latitude}, ${longitude}
       ) RETURNING *
     `;
 

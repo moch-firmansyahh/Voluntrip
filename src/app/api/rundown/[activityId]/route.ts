@@ -43,6 +43,30 @@ export async function DELETE(
   }
 }
 
+// Server-side Geocoding helper using Nominatim
+async function geocodeLocation(locationName: string): Promise<{ lat: number; lon: number } | null> {
+  if (!locationName) return null;
+  try {
+    const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(locationName)}&limit=1`, {
+      headers: {
+        'User-Agent': 'Voluntrip-App/1.0 (contact@voluntrip.com)'
+      }
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data[0]) {
+        return {
+          lat: parseFloat(data[0].lat),
+          lon: parseFloat(data[0].lon)
+        };
+      }
+    }
+  } catch (error) {
+    console.error('Server geocoding error for location:', locationName, error);
+  }
+  return null;
+}
+
 // PUT /api/rundown/[activityId]
 export async function PUT(
   request: Request,
@@ -69,6 +93,30 @@ export async function PUT(
 
     const data = result.data;
 
+    // Fetch current activity to check if location has changed
+    const currentActivity = await sql`
+      SELECT location, latitude, longitude FROM rundown_activities WHERE id = ${activityId}
+    `;
+    
+    let latitude = currentActivity[0]?.latitude || null;
+    let longitude = currentActivity[0]?.longitude || null;
+
+    if (data.location !== currentActivity[0]?.location) {
+      if (data.location) {
+        const coords = await geocodeLocation(data.location);
+        if (coords) {
+          latitude = coords.lat;
+          longitude = coords.lon;
+        } else {
+          latitude = null;
+          longitude = null;
+        }
+      } else {
+        latitude = null;
+        longitude = null;
+      }
+    }
+
     const activities = await sql`
       UPDATE rundown_activities SET
         title = ${data.title},
@@ -76,7 +124,9 @@ export async function PUT(
         start_time = ${data.start_time},
         end_time = ${data.end_time},
         note = ${data.note || null},
-        cost = ${data.cost}
+        cost = ${data.cost},
+        latitude = ${latitude},
+        longitude = ${longitude}
       WHERE id = ${activityId}
       RETURNING *
     `;

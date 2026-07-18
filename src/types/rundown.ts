@@ -16,4 +16,6 @@ export interface RundownActivity {
   note: string | null;
   order_index: number;
   cost: number;
+  latitude: number | null;
+  longitude: number | null;
 }

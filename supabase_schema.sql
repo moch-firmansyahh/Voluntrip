@@ -72,7 +72,9 @@ create table if not exists rundown_activities (
     end_time time not null,
     note text,
     order_index integer not null,
-    cost numeric(12, 2) not null default 0.00
+    cost numeric(12, 2) not null default 0.00,
+    latitude double precision,
+    longitude double precision
 );
 
 -- Seed initial admin user

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { 
   Calendar, 
   MapPin, 
@@ -22,6 +23,18 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+
+const LeafletMap = dynamic(() => import('@/components/shared/LeafletMap'), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-full min-h-[380px] bg-slate-50 flex items-center justify-center rounded-2xl animate-pulse">
+      <div className="flex items-center gap-2 text-xs font-bold text-[oklch(0.48_0.01_40)]">
+        <Loader2 className="mr-2 animate-spin text-[oklch(0.70_0.08_40)]" size={16} />
+        <span>Memuat peta rute...</span>
+      </div>
+    </div>
+  )
+});
 
 interface Trip {
   id: string;
@@ -167,35 +180,66 @@ export default function TripDetailPage() {
     return url;
   };
 
-  // Fetch coordinates for unique locations
+  // Extract unique coordinates from database-cached rundown activities
   useEffect(() => {
-    const locations = getItineraryRoute();
-    if (locations.length === 0) {
+    if (rundown.length === 0) {
       setRouteCoords([]);
       return;
     }
 
+    const sortedDays = [...rundown].sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0));
+    const rawCoordsList: { name: string; lat: number | null; lon: number | null }[] = [];
+
+    sortedDays.forEach(day => {
+      if (day.activities) {
+        const sortedActivities = [...day.activities].sort((a, b) => (a.order_index ?? 0) - (b.order_index ?? 0));
+        sortedActivities.forEach(act => {
+          if (act.location && act.location.trim()) {
+            rawCoordsList.push({
+              name: act.location.trim(),
+              lat: act.latitude,
+              lon: act.longitude
+            });
+          }
+        });
+      }
+    });
+
+    const uniqueRawList = rawCoordsList.filter((coord, idx) => idx === 0 || coord.name !== rawCoordsList[idx - 1].name);
+
+    // If all activities have coords cached in DB, load them instantly
+    const needsGeocoding = uniqueRawList.filter(item => item.lat === null || item.lon === null);
+    if (needsGeocoding.length === 0) {
+      setRouteCoords(uniqueRawList as any);
+      setMapLoading(false);
+      return;
+    }
+
+    // Fallback: Geocode only the missing coordinates
     const fetchCoords = async () => {
       setMapLoading(true);
       const coordsList: { name: string; lat: number; lon: number }[] = [];
-      const targetLocations = locations.slice(0, 10); // Limit to first 10 locations to respect API limits
 
       try {
-        const promises = targetLocations.map(async (loc) => {
+        const promises = uniqueRawList.map(async (item) => {
+          if (item.lat !== null && item.lon !== null) {
+            return { name: item.name, lat: item.lat, lon: item.lon };
+          }
+          // Fallback Nominatim request
           try {
-            const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(loc)}&limit=1`);
+            const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(item.name)}&limit=1`);
             if (res.ok) {
               const data = await res.json();
               if (data && data[0]) {
                 return {
-                  name: loc,
+                  name: item.name,
                   lat: parseFloat(data[0].lat),
                   lon: parseFloat(data[0].lon)
                 };
               }
             }
           } catch (e) {
-            console.error('Error geocoding location:', loc, e);
+            console.error('Error geocoding fallback:', item.name, e);
           }
           return null;
         });
@@ -214,126 +258,6 @@ export default function TripDetailPage() {
 
     fetchCoords();
   }, [rundown]);
-
-  // Leaflet Dynamic Integration and Initialization
-  useEffect(() => {
-    if (routeCoords.length === 0) return;
-
-    // Inject CSS
-    let link = document.getElementById('leaflet-css') as HTMLLinkElement;
-    if (!link) {
-      link = document.createElement('link');
-      link.id = 'leaflet-css';
-      link.rel = 'stylesheet';
-      link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
-      document.head.appendChild(link);
-    }
-
-    // Inject JS
-    let script = document.getElementById('leaflet-js') as HTMLScriptElement;
-    if (!script) {
-      script = document.createElement('script');
-      script.id = 'leaflet-js';
-      script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
-      script.onload = () => {
-        setLeafletLoaded(true);
-      };
-      document.body.appendChild(script);
-    } else {
-      // @ts-ignore
-      if (window.L) {
-        setLeafletLoaded(true);
-      } else {
-        script.addEventListener('load', () => setLeafletLoaded(true));
-      }
-    }
-  }, [routeCoords]);
-
-  // Handle map instance creation and update when Leaflet JS or mapTheme changes
-  useEffect(() => {
-    if (!leafletLoaded || routeCoords.length === 0) return;
-
-    // @ts-ignore
-    const L = window.L;
-    if (!L) return;
-
-    // Clean up previous map if exists
-    // @ts-ignore
-    if (window.tripOverviewMap) {
-      // @ts-ignore
-      window.tripOverviewMap.remove();
-    }
-
-    const mapContainer = document.getElementById('trip-route-map');
-    if (!mapContainer) return;
-
-    // @ts-ignore
-    const map = L.map('trip-route-map', { zoomControl: true });
-    // @ts-ignore
-    window.tripOverviewMap = map;
-
-    // Save markers globally for interactive clicks
-    // @ts-ignore
-    window.tripMarkers = [];
-
-    const points: any[] = [];
-
-    routeCoords.forEach((coord, index) => {
-      const markerLatLng = [coord.lat, coord.lon];
-      points.push(markerLatLng);
-
-      const customIcon = L.divIcon({
-        className: 'custom-map-marker',
-        html: `<div class="w-7 h-7 rounded-full bg-[oklch(0.38_0.06_210)] border-2 border-white flex items-center justify-center text-white text-xs font-bold shadow-md hover:scale-110 transition-transform custom-map-marker-glow">${index + 1}</div>`,
-        iconSize: [28, 28],
-        iconAnchor: [14, 14]
-      });
-
-      const marker = L.marker(markerLatLng, { icon: customIcon })
-        .addTo(map)
-        .bindPopup(`<div class="p-1 font-sans text-xs"><strong>${index + 1}. ${coord.name}</strong></div>`);
-
-      // @ts-ignore
-      window.tripMarkers.push(marker);
-    });
-
-    if (points.length >= 2) {
-      L.polyline(points, {
-        color: '#C79E8D',
-        weight: 4,
-        dashArray: '6, 6',
-        opacity: 0.85
-      }).addTo(map);
-    }
-
-    if (points.length > 0) {
-      map.fitBounds(L.latLngBounds(points), { padding: [40, 40] });
-    }
-
-    // Set tile layer
-    let tileUrl = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
-    let attribution = '&copy; OpenStreetMap &copy; CARTO';
-
-    if (mapTheme === 'dark') {
-      tileUrl = 'https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}{r}.png';
-    } else if (mapTheme === 'satellite') {
-      tileUrl = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
-      attribution = 'Tiles &copy; Esri &mdash; Community Map';
-    }
-
-    const layer = L.tileLayer(tileUrl, { attribution, maxZoom: 20 }).addTo(map);
-    // @ts-ignore
-    window.activeTileLayer = layer;
-
-    // Trigger immediate resize recalculation for reliable rendering
-    const resizeTimer = setTimeout(() => {
-      map.invalidateSize();
-    }, 100);
-
-    return () => {
-      clearTimeout(resizeTimer);
-    };
-  }, [routeCoords, leafletLoaded, mapTheme]);
 
   // Toggle Sharing
   const handleToggleShare = async () => {
@@ -671,7 +595,7 @@ export default function TripDetailPage() {
               </div>
             ) : (
               <div className="w-full relative" style={{ height: '440px', minHeight: '440px' }}>
-                <div id="trip-route-map" className="w-full h-full rounded-b-3xl" style={{ height: '100%', width: '100%' }} />
+                <LeafletMap routeCoords={routeCoords} mapTheme={mapTheme} />
                 
                 {/* Floating Theme Controller inside Map */}
                 <div className="absolute top-3 right-3 z-[400] bg-white/80 backdrop-blur-md border border-[oklch(0.90_0.008_70)]/70 px-1.5 py-1 rounded-xl shadow-md flex items-center gap-1">
