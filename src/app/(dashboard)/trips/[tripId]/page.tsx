@@ -70,6 +70,26 @@ export default function TripDetailPage() {
   const [sharingLoading, setSharingLoading] = useState(false);
   const [copied, setCopied] = useState(false);
 
+  // Map Theme and interactive focus states
+  const [mapTheme, setMapTheme] = useState('voyager');
+  
+  const focusOnMarker = (index: number) => {
+    // @ts-ignore
+    const map = window.tripOverviewMap;
+    // @ts-ignore
+    const markers = window.tripMarkers || [];
+    const marker = markers[index];
+    const coord = routeCoords[index];
+    if (map && coord) {
+      map.setView([coord.lat, coord.lon], 16, { animate: true, duration: 1.2 });
+      if (marker) {
+        setTimeout(() => {
+          marker.openPopup();
+        }, 300);
+      }
+    }
+  };
+
   const fetchTripData = async () => {
     try {
       setLoading(true);
@@ -233,11 +253,9 @@ export default function TripDetailPage() {
       // @ts-ignore
       window.tripOverviewMap = map;
 
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-        subdomains: 'abcd',
-        maxZoom: 20
-      }).addTo(map);
+      // Save markers globally for interactive clicks
+      // @ts-ignore
+      window.tripMarkers = [];
 
       const points: any[] = [];
 
@@ -247,14 +265,17 @@ export default function TripDetailPage() {
 
         const customIcon = L.divIcon({
           className: 'custom-map-marker',
-          html: `<div class="w-6 h-6 rounded-full bg-[oklch(0.38_0.06_210)] border-2 border-white flex items-center justify-center text-white text-[10px] font-bold shadow">${index + 1}</div>`,
-          iconSize: [24, 24],
-          iconAnchor: [12, 12]
+          html: `<div class="w-7 h-7 rounded-full bg-[oklch(0.38_0.06_210)] border-2 border-white flex items-center justify-center text-white text-xs font-bold shadow-md hover:scale-110 transition-transform custom-map-marker-glow">${index + 1}</div>`,
+          iconSize: [28, 28],
+          iconAnchor: [14, 14]
         });
 
-        L.marker(markerLatLng, { icon: customIcon })
+        const marker = L.marker(markerLatLng, { icon: customIcon })
           .addTo(map)
           .bindPopup(`<div class="p-1 font-sans text-xs"><strong>${index + 1}. ${coord.name}</strong></div>`);
+
+        // @ts-ignore
+        window.tripMarkers.push(marker);
       });
 
       if (points.length >= 2) {
@@ -269,6 +290,37 @@ export default function TripDetailPage() {
       if (points.length > 0) {
         map.fitBounds(L.latLngBounds(points), { padding: [30, 30] });
       }
+
+      // Initial Tile Layer setup
+      updateTileLayer();
+    };
+
+    const updateTileLayer = () => {
+      // @ts-ignore
+      const L = window.L;
+      // @ts-ignore
+      const map = window.tripOverviewMap;
+      if (!L || !map) return;
+
+      // @ts-ignore
+      if (window.activeTileLayer) {
+        // @ts-ignore
+        map.removeLayer(window.activeTileLayer);
+      }
+
+      let tileUrl = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+      let attribution = '&copy; OpenStreetMap &copy; CARTO';
+
+      if (mapTheme === 'dark') {
+        tileUrl = 'https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}{r}.png';
+      } else if (mapTheme === 'satellite') {
+        tileUrl = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+        attribution = 'Tiles &copy; Esri &mdash; Community Map';
+      }
+
+      const layer = L.tileLayer(tileUrl, { attribution, maxZoom: 20 }).addTo(map);
+      // @ts-ignore
+      window.activeTileLayer = layer;
     };
 
     if (script) {
@@ -294,6 +346,35 @@ export default function TripDetailPage() {
       clearTimeout(resizeTimer);
     };
   }, [routeCoords]);
+
+  // Handle tile layer change dynamically
+  useEffect(() => {
+    // @ts-ignore
+    const L = window.L;
+    // @ts-ignore
+    const map = window.tripOverviewMap;
+    if (!L || !map) return;
+
+    // @ts-ignore
+    if (window.activeTileLayer) {
+      // @ts-ignore
+      map.removeLayer(window.activeTileLayer);
+    }
+
+    let tileUrl = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+    let attribution = '&copy; OpenStreetMap &copy; CARTO';
+
+    if (mapTheme === 'dark') {
+      tileUrl = 'https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}{r}.png';
+    } else if (mapTheme === 'satellite') {
+      tileUrl = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+      attribution = 'Tiles &copy; Esri &mdash; Community Map';
+    }
+
+    const layer = L.tileLayer(tileUrl, { attribution, maxZoom: 20 }).addTo(map);
+    // @ts-ignore
+    window.activeTileLayer = layer;
+  }, [mapTheme]);
 
   // Toggle Sharing
   const handleToggleShare = async () => {
@@ -521,28 +602,28 @@ export default function TripDetailPage() {
 
             {/* Travel Route Map Card */}
             <Card className="rounded-3xl border-[oklch(0.90_0.008_70)] shadow-sm bg-white overflow-hidden flex flex-col">
-              <CardHeader className="pb-3 border-b border-[oklch(0.90_0.008_70)]/40 flex flex-row items-center justify-between">
+              <CardHeader className="pb-3 border-b border-[oklch(0.90_0.008_70)]/40 flex flex-row items-center justify-between gap-4">
                 <div>
                   <CardTitle className="font-heading text-base font-bold text-[oklch(0.22_0.01_40)] flex items-center gap-2">
-                    <Map size={18} className="text-[oklch(0.70_0.08_40)]" />
-                    Alur Perjalanan Trip
+                    <Map size={18} className="text-[oklch(0.70_0.08_40)] animate-pulse" />
+                    Rute & Alur Perjalanan
                   </CardTitle>
-                  <p className="text-[10px] text-[oklch(0.48_0.01_40)] mt-0.5">Rute visual menghubungkan lokasi-lokasi itinerary Anda.</p>
+                  <p className="text-[10px] text-[oklch(0.48_0.01_40)] mt-0.5">Visualisasi interaktif perjalanan Anda. Klik pemberhentian untuk memfokuskan peta.</p>
                 </div>
                 {routeCoords.length >= 2 && (
                   <a
                     href={getGoogleMapsDirUrl()}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-orange-50 hover:bg-orange-100/80 text-[10px] font-bold text-orange-600 border border-orange-100 transition-colors cursor-pointer"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-orange-50 hover:bg-orange-100/80 text-[10px] font-bold text-orange-600 border border-orange-100 transition-colors cursor-pointer shrink-0"
                   >
                     <ExternalLink size={12} />
-                    Petunjuk Google Maps
+                    Google Maps Rute Lengkap
                   </a>
                 )}
               </CardHeader>
 
-              <CardContent className="p-0 relative flex-1 min-h-[300px]">
+              <CardContent className="p-0 relative min-h-[350px]">
                 {mapLoading ? (
                   <div className="absolute inset-0 bg-slate-50/50 backdrop-blur-sm flex flex-col items-center justify-center gap-2 z-10">
                     <Loader2 className="animate-spin text-[oklch(0.70_0.08_40)]" size={24} />
@@ -551,7 +632,7 @@ export default function TripDetailPage() {
                 ) : null}
 
                 {routeCoords.length === 0 ? (
-                  <div className="absolute inset-0 bg-slate-50/30 flex flex-col items-center justify-center text-center p-6 space-y-2">
+                  <div className="absolute inset-0 bg-slate-50/30 flex flex-col items-center justify-center text-center p-6 space-y-2 min-h-[350px]">
                     <div className="w-12 h-12 rounded-full bg-[oklch(0.92_0.008_240)] flex items-center justify-center text-[oklch(0.38_0.06_210)]">
                       <MapPin size={22} />
                     </div>
@@ -561,13 +642,83 @@ export default function TripDetailPage() {
                     </p>
                   </div>
                 ) : (
-                  <div className="w-full h-full min-h-[300px] relative">
-                    <div id="trip-route-map" className="w-full h-full min-h-[300px] rounded-b-3xl" />
-                    
-                    {/* Floating Info Overlay showing the Route stops count */}
-                    <div className="absolute bottom-4 left-4 z-[400] bg-white/90 backdrop-blur-sm border border-[oklch(0.90_0.008_70)] px-3 py-2 rounded-2xl shadow-sm text-[10px] text-[oklch(0.22_0.01_40)] font-semibold flex items-center gap-2">
-                      <div className="w-2.5 h-2.5 rounded-full bg-teal-500 animate-pulse" />
-                      <span>{routeCoords.length} Pemberhentian Terdeteksi</span>
+                  <div className="grid grid-cols-1 lg:grid-cols-3 min-h-[350px]">
+                    {/* Interactive Leaflet Map Box */}
+                    <div className="lg:col-span-2 relative h-[350px] lg:h-[420px] border-b lg:border-b-0 lg:border-r border-[oklch(0.90_0.008_70)]/40">
+                      <div id="trip-route-map" className="w-full h-full" />
+                      
+                      {/* Floating Theme Controller inside Map */}
+                      <div className="absolute top-3 right-3 z-[400] bg-white/80 backdrop-blur-md border border-[oklch(0.90_0.008_70)]/70 px-1.5 py-1 rounded-xl shadow-md flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => setMapTheme('voyager')}
+                          className={`text-[9px] font-bold px-2 py-1 rounded-lg transition-all cursor-pointer ${
+                            mapTheme === 'voyager'
+                              ? 'bg-[oklch(0.38_0.06_210)] text-white shadow-sm'
+                              : 'text-[oklch(0.22_0.01_40)] hover:bg-[oklch(0.94_0.008_70)]'
+                          }`}
+                        >
+                          Satu
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setMapTheme('dark')}
+                          className={`text-[9px] font-bold px-2 py-1 rounded-lg transition-all cursor-pointer ${
+                            mapTheme === 'dark'
+                              ? 'bg-[oklch(0.38_0.06_210)] text-white shadow-sm'
+                              : 'text-[oklch(0.22_0.01_40)] hover:bg-[oklch(0.94_0.008_70)]'
+                          }`}
+                        >
+                          Gelap
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setMapTheme('satellite')}
+                          className={`text-[9px] font-bold px-2 py-1 rounded-lg transition-all cursor-pointer ${
+                            mapTheme === 'satellite'
+                              ? 'bg-[oklch(0.38_0.06_210)] text-white shadow-sm'
+                              : 'text-[oklch(0.22_0.01_40)] hover:bg-[oklch(0.94_0.008_70)]'
+                          }`}
+                        >
+                          Satelit
+                        </button>
+                      </div>
+
+                      {/* Floating Info Overlay showing the Route stops count */}
+                      <div className="absolute bottom-4 left-4 z-[400] bg-white/95 backdrop-blur-sm border border-[oklch(0.90_0.008_70)] px-3 py-1.5 rounded-xl shadow text-[9px] text-[oklch(0.22_0.01_40)] font-bold flex items-center gap-1.5">
+                        <div className="w-2 h-2 rounded-full bg-teal-500 animate-pulse" />
+                        <span>{routeCoords.length} Pemberhentian Terdeteksi</span>
+                      </div>
+                    </div>
+
+                    {/* Interactive Sidebar Stop Timeline List */}
+                    <div className="lg:col-span-1 p-4 bg-slate-50/40 flex flex-col h-[350px] lg:h-[420px] overflow-hidden">
+                      <span className="text-[10px] font-extrabold uppercase tracking-widest text-[oklch(0.48_0.01_40)] block mb-3">
+                        Urutan Pemberhentian ({routeCoords.length})
+                      </span>
+                      
+                      <div className="flex-1 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
+                        {routeCoords.map((coord, index) => (
+                          <button
+                            key={index}
+                            type="button"
+                            onClick={() => focusOnMarker(index)}
+                            className="w-full text-left p-2.5 rounded-xl bg-white border border-[oklch(0.90_0.008_70)]/60 hover:border-[oklch(0.38_0.06_210)] hover:bg-[oklch(0.92_0.008_240)]/20 shadow-sm transition-all group flex items-start gap-2.5 cursor-pointer"
+                          >
+                            <span className="w-5 h-5 rounded-full bg-[oklch(0.92_0.008_240)] text-[oklch(0.38_0.06_210)] font-extrabold text-[10px] flex items-center justify-center shrink-0 border border-[oklch(0.90_0.008_70)]/30 group-hover:bg-[oklch(0.38_0.06_210)] group-hover:text-white group-hover:border-transparent transition-all">
+                              {index + 1}
+                            </span>
+                            <div className="min-w-0 flex-1">
+                              <span className="text-[11px] font-bold text-[oklch(0.22_0.01_40)] block truncate group-hover:text-[oklch(0.38_0.06_210)] transition-colors">
+                                {coord.name}
+                              </span>
+                              <span className="text-[9px] text-[oklch(0.48_0.01_40)] font-medium mt-0.5 block flex items-center gap-1">
+                                <MapPin size={9} className="text-orange-400" /> Posisikan di Peta
+                              </span>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
                     </div>
 
                     <style>{`
@@ -582,6 +733,34 @@ export default function TripDetailPage() {
                       }
                       .leaflet-popup-tip-container {
                         display: none !important;
+                      }
+                      .custom-map-marker-glow {
+                        box-shadow: 0 0 0 0 rgba(50, 82, 92, 0.5);
+                        animation: markerPulse 2s infinite;
+                      }
+                      @keyframes markerPulse {
+                        0% {
+                          box-shadow: 0 0 0 0 rgba(50, 82, 92, 0.5);
+                        }
+                        70% {
+                          box-shadow: 0 0 0 8px rgba(50, 82, 92, 0);
+                        }
+                        100% {
+                          box-shadow: 0 0 0 0 rgba(50, 82, 92, 0);
+                        }
+                      }
+                      .custom-scrollbar::-webkit-scrollbar {
+                        width: 4px;
+                      }
+                      .custom-scrollbar::-webkit-scrollbar-track {
+                        background: transparent;
+                      }
+                      .custom-scrollbar::-webkit-scrollbar-thumb {
+                        background: oklch(0.90 0.008 70);
+                        border-radius: 99px;
+                      }
+                      .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+                        background: oklch(0.70 0.08 40);
                       }
                     `}</style>
                   </div>
