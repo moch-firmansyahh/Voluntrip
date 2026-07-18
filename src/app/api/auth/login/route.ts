@@ -5,7 +5,7 @@ import { comparePassword, signToken } from '@/lib/auth';
 
 export async function POST(request: Request) {
   try {
-    const { username, password } = await request.json();
+    const { username, password, rememberMe } = await request.json();
 
     if (!username || !password) {
       return NextResponse.json(
@@ -48,13 +48,18 @@ export async function POST(request: Request) {
 
     // Set cookie
     const cookieStore = await cookies();
-    cookieStore.set('voluntrip_session', token, {
+    const cookieOptions: any = {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      maxAge: 60 * 60 * 24 * 7, // 7 days
       path: '/',
       sameSite: 'lax',
-    });
+    };
+
+    if (rememberMe) {
+      cookieOptions.maxAge = 60 * 60 * 24 * 7; // 7 days (persistent)
+    }
+
+    cookieStore.set('voluntrip_session', token, cookieOptions);
 
     return NextResponse.json({
       success: true,

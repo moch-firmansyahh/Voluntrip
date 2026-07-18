@@ -17,6 +17,7 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
 
   // Forgot Password States
   const [isForgotOpen, setIsForgotOpen] = useState(false);
@@ -43,7 +44,7 @@ export default function LoginPage() {
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ username, password, rememberMe }),
       });
 
       const data = await response.json();
@@ -208,6 +209,21 @@ export default function LoginPage() {
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
+            </div>
+
+            {/* Remember Me Checkbox */}
+            <div className="flex items-center gap-2 pt-1">
+              <input
+                id="rememberMe"
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="w-4 h-4 rounded border-[oklch(0.90_0.008_70)] text-[oklch(0.70_0.08_40)] focus:ring-[oklch(0.70_0.08_40)] cursor-pointer"
+                disabled={loading}
+              />
+              <Label htmlFor="rememberMe" className="text-xs font-semibold text-[oklch(0.48_0.01_40)] select-none cursor-pointer">
+                Tetap Masuk
+              </Label>
             </div>
           </CardContent>
 
