@@ -3,8 +3,15 @@ import { getSession } from '@/lib/auth';
 import { sql } from '@/lib/supabase';
 import { activitySchema } from '@/lib/validators/rundown.schema';
 
+function isValidUUID(uuid: string) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(uuid);
+}
+
 // Helper to check activity ownership
 async function checkActivityOwnership(activityId: string, userId: string) {
+  if (!isValidUUID(activityId) || !isValidUUID(userId)) {
+    return false;
+  }
   const result = await sql`
     SELECT ra.id 
     FROM rundown_activities ra
@@ -134,6 +141,6 @@ export async function PUT(
     return NextResponse.json(activities[0]);
   } catch (error: any) {
     console.error('PUT /api/rundown/[activityId] error:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
   }
 }
