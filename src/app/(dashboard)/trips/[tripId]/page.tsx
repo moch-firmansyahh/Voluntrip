@@ -129,6 +129,7 @@ export default function TripDetailPage() {
   // Route Geocoding Coordinates State
   const [routeCoords, setRouteCoords] = useState<{ name: string; lat: number; lon: number }[]>([]);
   const [mapLoading, setMapLoading] = useState(false);
+  const [leafletLoaded, setLeafletLoaded] = useState(false);
 
   // Helper to extract unique sequential locations
   const getItineraryRoute = () => {
@@ -218,149 +219,98 @@ export default function TripDetailPage() {
   useEffect(() => {
     if (routeCoords.length === 0) return;
 
-    if (!document.getElementById('leaflet-css')) {
-      const link = document.createElement('link');
+    // Inject CSS
+    let link = document.getElementById('leaflet-css') as HTMLLinkElement;
+    if (!link) {
+      link = document.createElement('link');
       link.id = 'leaflet-css';
       link.rel = 'stylesheet';
       link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
       document.head.appendChild(link);
     }
 
+    // Inject JS
     let script = document.getElementById('leaflet-js') as HTMLScriptElement;
     if (!script) {
       script = document.createElement('script');
       script.id = 'leaflet-js';
       script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+      script.onload = () => {
+        setLeafletLoaded(true);
+      };
       document.body.appendChild(script);
-    }
-
-    const initMap = () => {
+    } else {
       // @ts-ignore
-      const L = window.L;
-      if (!L) return;
-
-      // @ts-ignore
-      if (window.tripOverviewMap) {
-        // @ts-ignore
-        window.tripOverviewMap.remove();
-      }
-
-      const mapContainer = document.getElementById('trip-route-map');
-      if (!mapContainer) return;
-
-      // @ts-ignore
-      const map = L.map('trip-route-map', { zoomControl: true });
-      // @ts-ignore
-      window.tripOverviewMap = map;
-
-      // Save markers globally for interactive clicks
-      // @ts-ignore
-      window.tripMarkers = [];
-
-      const points: any[] = [];
-
-      routeCoords.forEach((coord, index) => {
-        const markerLatLng = [coord.lat, coord.lon];
-        points.push(markerLatLng);
-
-        const customIcon = L.divIcon({
-          className: 'custom-map-marker',
-          html: `<div class="w-7 h-7 rounded-full bg-[oklch(0.38_0.06_210)] border-2 border-white flex items-center justify-center text-white text-xs font-bold shadow-md hover:scale-110 transition-transform custom-map-marker-glow">${index + 1}</div>`,
-          iconSize: [28, 28],
-          iconAnchor: [14, 14]
-        });
-
-        const marker = L.marker(markerLatLng, { icon: customIcon })
-          .addTo(map)
-          .bindPopup(`<div class="p-1 font-sans text-xs"><strong>${index + 1}. ${coord.name}</strong></div>`);
-
-        // @ts-ignore
-        window.tripMarkers.push(marker);
-      });
-
-      if (points.length >= 2) {
-        L.polyline(points, {
-          color: '#C79E8D',
-          weight: 4,
-          dashArray: '6, 6',
-          opacity: 0.85
-        }).addTo(map);
-      }
-
-      if (points.length > 0) {
-        map.fitBounds(L.latLngBounds(points), { padding: [30, 30] });
-      }
-
-      // Initial Tile Layer setup
-      updateTileLayer();
-    };
-
-    const updateTileLayer = () => {
-      // @ts-ignore
-      const L = window.L;
-      // @ts-ignore
-      const map = window.tripOverviewMap;
-      if (!L || !map) return;
-
-      // @ts-ignore
-      if (window.activeTileLayer) {
-        // @ts-ignore
-        map.removeLayer(window.activeTileLayer);
-      }
-
-      let tileUrl = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
-      let attribution = '&copy; OpenStreetMap &copy; CARTO';
-
-      if (mapTheme === 'dark') {
-        tileUrl = 'https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}{r}.png';
-      } else if (mapTheme === 'satellite') {
-        tileUrl = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
-        attribution = 'Tiles &copy; Esri &mdash; Community Map';
-      }
-
-      const layer = L.tileLayer(tileUrl, { attribution, maxZoom: 20 }).addTo(map);
-      // @ts-ignore
-      window.activeTileLayer = layer;
-    };
-
-    if (script) {
-      if (script.getAttribute('data-loaded') === 'true') {
-        initMap();
+      if (window.L) {
+        setLeafletLoaded(true);
       } else {
-        script.addEventListener('load', () => {
-          script.setAttribute('data-loaded', 'true');
-          initMap();
-        });
+        script.addEventListener('load', () => setLeafletLoaded(true));
       }
     }
-
-    const resizeTimer = setTimeout(() => {
-      // @ts-ignore
-      if (window.tripOverviewMap) {
-        // @ts-ignore
-        window.tripOverviewMap.invalidateSize();
-      }
-    }, 500);
-
-    return () => {
-      clearTimeout(resizeTimer);
-    };
   }, [routeCoords]);
 
-  // Handle tile layer change dynamically
+  // Handle map instance creation and update when Leaflet JS or mapTheme changes
   useEffect(() => {
+    if (!leafletLoaded || routeCoords.length === 0) return;
+
     // @ts-ignore
     const L = window.L;
-    // @ts-ignore
-    const map = window.tripOverviewMap;
-    if (!L || !map) return;
+    if (!L) return;
 
+    // Clean up previous map if exists
     // @ts-ignore
-    if (window.activeTileLayer) {
+    if (window.tripOverviewMap) {
       // @ts-ignore
-      map.removeLayer(window.activeTileLayer);
+      window.tripOverviewMap.remove();
     }
 
+    const mapContainer = document.getElementById('trip-route-map');
+    if (!mapContainer) return;
+
+    // @ts-ignore
+    const map = L.map('trip-route-map', { zoomControl: true });
+    // @ts-ignore
+    window.tripOverviewMap = map;
+
+    // Save markers globally for interactive clicks
+    // @ts-ignore
+    window.tripMarkers = [];
+
+    const points: any[] = [];
+
+    routeCoords.forEach((coord, index) => {
+      const markerLatLng = [coord.lat, coord.lon];
+      points.push(markerLatLng);
+
+      const customIcon = L.divIcon({
+        className: 'custom-map-marker',
+        html: `<div class="w-7 h-7 rounded-full bg-[oklch(0.38_0.06_210)] border-2 border-white flex items-center justify-center text-white text-xs font-bold shadow-md hover:scale-110 transition-transform custom-map-marker-glow">${index + 1}</div>`,
+        iconSize: [28, 28],
+        iconAnchor: [14, 14]
+      });
+
+      const marker = L.marker(markerLatLng, { icon: customIcon })
+        .addTo(map)
+        .bindPopup(`<div class="p-1 font-sans text-xs"><strong>${index + 1}. ${coord.name}</strong></div>`);
+
+      // @ts-ignore
+      window.tripMarkers.push(marker);
+    });
+
+    if (points.length >= 2) {
+      L.polyline(points, {
+        color: '#C79E8D',
+        weight: 4,
+        dashArray: '6, 6',
+        opacity: 0.85
+      }).addTo(map);
+    }
+
+    if (points.length > 0) {
+      map.fitBounds(L.latLngBounds(points), { padding: [40, 40] });
+    }
+
+    // Set tile layer
     let tileUrl = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
     let attribution = '&copy; OpenStreetMap &copy; CARTO';
 
@@ -374,7 +324,16 @@ export default function TripDetailPage() {
     const layer = L.tileLayer(tileUrl, { attribution, maxZoom: 20 }).addTo(map);
     // @ts-ignore
     window.activeTileLayer = layer;
-  }, [mapTheme]);
+
+    // Trigger immediate resize recalculation for reliable rendering
+    const resizeTimer = setTimeout(() => {
+      map.invalidateSize();
+    }, 100);
+
+    return () => {
+      clearTimeout(resizeTimer);
+    };
+  }, [routeCoords, leafletLoaded, mapTheme]);
 
   // Toggle Sharing
   const handleToggleShare = async () => {
@@ -572,56 +531,55 @@ export default function TripDetailPage() {
       </div>
 
       {/* Main Options & Sharing Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Navigation shortcut card */}
-        <div className="lg:col-span-2 space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Left: Planning Shortcut Card */}
+        <div className="flex flex-col space-y-4">
           <h3 className="text-lg font-bold font-heading">Menu Perencanaan</h3>
           
-          <div className="grid grid-cols-1 gap-6">
-            {/* Unified Rundown & Budget Link Card */}
-            <Link href={`/trips/${tripId}/rundown`} className="group block">
-              <Card className="rounded-3xl border-[oklch(0.90_0.008_70)] shadow-sm bg-white hover:shadow-md transition-all p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div className="flex items-start sm:items-center gap-4">
-                  <div className="w-12 h-12 rounded-2xl bg-[oklch(0.86_0.05_45)] flex items-center justify-center text-[oklch(0.70_0.08_40)] shrink-0">
-                    <Calendar size={24} />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-base text-[oklch(0.22_0.01_40)] group-hover:text-[oklch(0.70_0.08_40)] transition-colors">
-                      Itinerary
-                    </h4>
-                    <p className="text-xs text-[oklch(0.48_0.01_40)] mt-1 leading-relaxed">
-                      Susun jadwal kegiatan harian trip Anda secara visual, atur urutan aktivitas dengan drag and drop, serta kelola anggaran terpadu.
-                    </p>
-                  </div>
+          <Link href={`/trips/${tripId}/rundown`} className="group block flex-1">
+            <Card className="rounded-3xl border-[oklch(0.90_0.008_70)] shadow-sm bg-white hover:shadow-md transition-all p-6 flex flex-col justify-between h-full min-h-[220px]">
+              <div className="space-y-4">
+                <div className="w-12 h-12 rounded-2xl bg-[oklch(0.86_0.05_45)] flex items-center justify-center text-[oklch(0.70_0.08_40)] shrink-0">
+                  <Calendar size={24} />
                 </div>
-                <div className="flex items-center gap-1 text-xs font-semibold text-[oklch(0.70_0.08_40)] pt-2 sm:pt-0 group-hover:translate-x-1 transition-transform shrink-0">
-                  Atur Itinerary <ArrowRight size={14} />
+                <div>
+                  <h4 className="font-bold text-base text-[oklch(0.22_0.01_40)] group-hover:text-[oklch(0.70_0.08_40)] transition-colors">
+                    Itinerary & Anggaran
+                  </h4>
+                  <p className="text-xs text-[oklch(0.48_0.01_40)] mt-1.5 leading-relaxed">
+                    Susun jadwal kegiatan harian trip Anda secara visual, atur urutan aktivitas dengan drag and drop, serta kelola anggaran terpadu.
+                  </p>
                 </div>
-              </Card>
-            </Link>
-          </div>
+              </div>
+              <div className="flex items-center gap-1 text-xs font-semibold text-[oklch(0.70_0.08_40)] pt-4 group-hover:translate-x-1 transition-transform border-t border-[oklch(0.90_0.008_70)]/30 mt-4">
+                Atur Itinerary Hari & Kegiatan <ArrowRight size={14} />
+              </div>
+            </Card>
+          </Link>
         </div>
 
-        {/* Sharing Widget Card */}
-        <div className="space-y-4">
+        {/* Right: Sharing Widget Card */}
+        <div className="flex flex-col space-y-4">
           <h3 className="text-lg font-bold font-heading">Bagikan Trip</h3>
           
-          <Card className="rounded-3xl border-[oklch(0.90_0.008_70)] shadow-sm bg-white overflow-hidden p-6 space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-[oklch(0.86_0.05_45)] flex items-center justify-center text-[oklch(0.70_0.08_40)]">
-                <Share2 size={20} />
+          <Card className="rounded-3xl border-[oklch(0.90_0.008_70)] shadow-sm bg-white overflow-hidden p-6 flex flex-col justify-between h-full min-h-[220px]">
+            <div className="space-y-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-[oklch(0.86_0.05_45)] flex items-center justify-center text-[oklch(0.70_0.08_40)]">
+                  <Share2 size={20} />
+                </div>
+                <div>
+                  <h4 className="font-bold text-sm">Public Link Sharing</h4>
+                  <p className="text-[10px] text-[oklch(0.48_0.01_40)]">Beri akses lihat ke orang lain</p>
+                </div>
               </div>
-              <div>
-                <h4 className="font-bold text-sm">Public Link Sharing</h4>
-                <p className="text-[10px] text-[oklch(0.48_0.01_40)]">Beri akses lihat ke orang lain</p>
-              </div>
+
+              <p className="text-xs text-[oklch(0.48_0.01_40)] leading-relaxed">
+                Aktifkan link publik agar teman atau keluarga dapat memantau rundown perjalanan Anda tanpa perlu login ke aplikasi.
+              </p>
             </div>
 
-            <p className="text-xs text-[oklch(0.48_0.01_40)] leading-relaxed">
-              Aktifkan link publik agar teman atau keluarga dapat memantau rundown perjalanan Anda tanpa perlu login ke aplikasi.
-            </p>
-
-            <div className="space-y-3 pt-2">
+            <div className="space-y-3 pt-4 border-t border-[oklch(0.90_0.008_70)]/30 mt-4">
               <Button
                 variant={trip.is_public ? 'outline' : 'default'}
                 onClick={handleToggleShare}
@@ -642,10 +600,7 @@ export default function TripDetailPage() {
               </Button>
 
               {trip.is_public && trip.share_token && (
-                <div className="space-y-2 animate-fade-in">
-                  <span className="text-[10px] font-bold text-[oklch(0.48_0.01_40)] uppercase tracking-wider block">
-                    Link Sharing Aktif:
-                  </span>
+                <div className="space-y-2 animate-fade-in pt-1">
                   <div className="flex gap-2 items-center">
                     <Input 
                       readOnly 
@@ -712,8 +667,8 @@ export default function TripDetailPage() {
                 </p>
               </div>
             ) : (
-              <div className="relative w-full h-[400px] md:h-[480px]">
-                <div id="trip-route-map" className="w-full h-full" />
+              <div className="w-full relative" style={{ height: '440px', minHeight: '440px' }}>
+                <div id="trip-route-map" className="w-full h-full rounded-b-3xl" style={{ height: '100%', width: '100%' }} />
                 
                 {/* Floating Theme Controller inside Map */}
                 <div className="absolute top-3 right-3 z-[400] bg-white/80 backdrop-blur-md border border-[oklch(0.90_0.008_70)]/70 px-1.5 py-1 rounded-xl shadow-md flex items-center gap-1">
