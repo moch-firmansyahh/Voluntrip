@@ -422,53 +422,54 @@ export default function TripDetailPage() {
   return (
     <div className="space-y-8 animate-fade-in">
       {/* Trip Header Banner */}
-      <div className="relative h-64 md:h-80 w-full rounded-3xl overflow-hidden border border-[oklch(0.90_0.008_70)] bg-gradient-to-br from-[oklch(0.38_0.06_210)] via-[oklch(0.42_0.07_200)] to-[oklch(0.70_0.08_40)] shadow-lg">
-        {/* Subtle grid pattern overlay for premium texture */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.05)_1px,transparent_1px)] bg-[size:24px_24px]" />
+      <div className="relative h-64 md:h-80 w-full rounded-3xl overflow-hidden border border-[oklch(0.90_0.008_70)] bg-gradient-to-tr from-[oklch(0.65_0.10_35)] via-[oklch(0.72_0.11_50)] to-[oklch(0.85_0.07_70)] shadow-md">
+        {/* Soft decorative radial glow elements for premium organic lighting depth */}
+        <div className="absolute top-[-10%] left-[-5%] w-[45%] h-[75%] rounded-full bg-white/20 blur-3xl pointer-events-none" />
+        <div className="absolute bottom-[-10%] right-[-5%] w-[40%] h-[70%] rounded-full bg-orange-400/20 blur-3xl pointer-events-none" />
         
         {trip.cover_image && (
           <img 
             src={trip.cover_image} 
             alt={trip.name} 
-            className="w-full h-full object-cover mix-blend-overlay opacity-90" 
+            className="w-full h-full object-cover mix-blend-multiply opacity-90" 
           />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/30 to-black/10" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-black/5" />
         
-        {/* Back navigation button (glassmorphism) */}
+        {/* Back navigation button (premium white glass) */}
         <Link 
           href="/trips" 
-          className="absolute top-4 left-4 flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-xs font-semibold text-white border border-white/20 shadow-md backdrop-blur-md transition-all"
+          className="absolute top-5 left-5 flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/95 hover:bg-white text-xs font-bold text-[oklch(0.22_0.01_40)] border border-white/50 shadow-md hover:scale-105 transition-all z-20 cursor-pointer"
         >
-          <ArrowLeft size={14} className="text-white" /> Kembali
+          <ArrowLeft size={14} /> Kembali
         </Link>
 
         {/* Text descriptions */}
         <div className="absolute bottom-6 left-6 right-6 text-white space-y-2.5 z-10">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[9px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/35 backdrop-blur-md px-3 py-1 rounded-full uppercase tracking-widest flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+            <span className="text-[9px] font-extrabold bg-white/20 text-white border border-white/20 backdrop-blur-md px-3 py-1 rounded-full uppercase tracking-widest flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-300 animate-pulse" />
               {trip.expense_mode === 'split' ? 'Split Bill' : 'Personal'} Mode
             </span>
           </div>
           <h2 className="text-2xl md:text-3.5xl font-black font-heading tracking-tight text-white drop-shadow-md">
             {trip.name}
           </h2>
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-slate-100/90 font-medium">
-            <span className="flex items-center gap-1 bg-white/5 px-2.5 py-1 rounded-lg backdrop-blur-sm border border-white/5">
-              <MapPin size={13} className="text-orange-400" /> {trip.destination}
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-xs font-bold text-white">
+            <span className="flex items-center gap-1.5 bg-white/10 px-3 py-1.5 rounded-xl backdrop-blur-sm border border-white/10">
+              <MapPin size={13} className="text-amber-300" /> {trip.destination}
             </span>
-            <span className="flex items-center gap-1 bg-white/5 px-2.5 py-1 rounded-lg backdrop-blur-sm border border-white/5">
-              <Calendar size={13} className="text-amber-400" /> {formatDateString(trip.start_date)} - {formatDateString(trip.end_date)}
+            <span className="flex items-center gap-1.5 bg-white/10 px-3 py-1.5 rounded-xl backdrop-blur-sm border border-white/10">
+              <Calendar size={13} className="text-amber-300" /> {formatDateString(trip.start_date)} - {formatDateString(trip.end_date)}
             </span>
           </div>
         </div>
 
-        {/* Top-right Budget floating badge (premium glassmorphism) */}
-        <div className="absolute top-4 right-4 text-white z-10">
-          <div className="bg-black/20 hover:bg-black/35 backdrop-blur-md px-5 py-3 rounded-2xl border border-white/15 shadow-xl transition-all flex flex-col items-end">
-            <span className="text-[9px] font-bold text-amber-300/90 uppercase tracking-widest block mb-0.5">Total Budget</span>
-            <span className="font-heading font-extrabold text-lg md:text-xl text-white drop-shadow-sm tracking-tight">{formatIDR(totalBudget)}</span>
+        {/* Top-right Budget floating badge (premium glassy white card) */}
+        <div className="absolute top-5 right-5 text-white z-20">
+          <div className="bg-white/95 hover:bg-white border border-white shadow-lg px-5 py-2.5 rounded-2xl transition-all hover:scale-[1.02] flex flex-col items-end">
+            <span className="text-[9px] font-bold text-[oklch(0.48_0.01_40)] uppercase tracking-wider block mb-0.5">Total Budget</span>
+            <span className="font-heading font-extrabold text-base md:text-lg text-[oklch(0.22_0.01_40)] tracking-tight">{formatIDR(totalBudget)}</span>
           </div>
         </div>
       </div>
