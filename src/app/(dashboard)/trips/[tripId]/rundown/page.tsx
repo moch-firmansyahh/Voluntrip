@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter, useParams } from 'next/navigation';
 import { 
@@ -79,7 +79,7 @@ interface SortableRowProps {
   onEdit: (activity: RundownActivity) => void;
 }
 
-function SortableActivityCard({ activity, onDelete, onEdit }: SortableRowProps) {
+const SortableActivityCard = React.memo(function SortableActivityCard({ activity, onDelete, onEdit }: SortableRowProps) {
   const {
     attributes,
     listeners,
@@ -174,7 +174,7 @@ function SortableActivityCard({ activity, onDelete, onEdit }: SortableRowProps) 
       </div>
     </div>
   );
-}
+});
 
 // MAIN PAGE COMPONENT
 export default function RundownPage() {
@@ -197,7 +197,7 @@ export default function RundownPage() {
   const [confirmMessage, setConfirmMessage] = useState('');
   const [onConfirm, setOnConfirm] = useState<(() => void) | null>(null);
 
-  const showConfirm = (title: string, message: string, callback: () => void) => {
+  const showConfirm = useCallback((title: string, message: string, callback: () => void) => {
     setConfirmTitle(title);
     setConfirmMessage(message);
     setOnConfirm(() => () => {
@@ -205,7 +205,7 @@ export default function RundownPage() {
       setConfirmOpen(false);
     });
     setConfirmOpen(true);
-  };
+  }, []);
   
   // Form states
   const [title, setTitle] = useState('');
@@ -303,15 +303,14 @@ export default function RundownPage() {
     setSuggestions([]);
   };
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
-    })
-  );
+  const pointerSensor = useSensor(PointerSensor, {
+    activationConstraint: {
+      distance: 8,
+    },
+  });
+  const sensors = useSensors(pointerSensor);
 
-  const fetchRundownData = async (silent = false) => {
+  const fetchRundownData = useCallback(async (silent = false) => {
     try {
       if (!silent) setLoading(true);
       // Parallelize fetches to eliminate database waterfalls (NFR loading speed optimization)
@@ -332,7 +331,7 @@ export default function RundownPage() {
     } finally {
       if (!silent) setLoading(false);
     }
-  };
+  }, [tripId]);
 
   useEffect(() => {
     if (tripId) {
@@ -355,7 +354,7 @@ export default function RundownPage() {
   };
 
   // Open Form Modal for Edit
-  const openEditModal = (activity: RundownActivity) => {
+  const openEditModal = useCallback((activity: RundownActivity) => {
     setEditingActivity(activity);
     setSelectedDayId(activity.rundown_day_id);
     setTitle(activity.title);
@@ -366,7 +365,7 @@ export default function RundownPage() {
     setNote(activity.note || '');
     setSuggestions([]);
     setIsOpen(true);
-  };
+  }, []);
 
   // Submit Activity Form (handles both Create and Edit)
   const handleSubmit = async (e: React.FormEvent) => {
@@ -412,7 +411,7 @@ export default function RundownPage() {
   };
 
   // Delete Activity
-  const handleDeleteActivity = (activityId: string) => {
+  const handleDeleteActivity = useCallback((activityId: string) => {
     showConfirm(
       'Hapus Agenda Kegiatan',
       'Apakah Anda yakin ingin menghapus agenda kegiatan ini?',
@@ -426,7 +425,7 @@ export default function RundownPage() {
         }
       }
     );
-  };
+  }, [fetchRundownData, showConfirm]);
 
   // Delete Day
   const handleDeleteDay = (dayId: string, dayNumber: number) => {
