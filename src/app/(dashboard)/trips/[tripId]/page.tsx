@@ -446,12 +446,14 @@ export default function TripDetailPage() {
 
         {/* Text descriptions */}
         <div className="absolute bottom-6 left-6 right-6 text-white space-y-2.5 z-10">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[9px] font-extrabold bg-white/20 text-white border border-white/20 backdrop-blur-md px-3 py-1 rounded-full uppercase tracking-widest flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-300 animate-pulse" />
-              {trip.expense_mode === 'split' ? 'Split Bill' : 'Personal'} Mode
-            </span>
-          </div>
+          {trip.expense_mode === 'split' && (
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-[9px] font-extrabold bg-amber-500/20 text-amber-300 border border-amber-500/35 backdrop-blur-md px-3 py-1 rounded-full uppercase tracking-widest flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                Split Bill Mode
+              </span>
+            </div>
+          )}
           <h2 className="text-2xl md:text-3.5xl font-black font-heading tracking-tight text-white drop-shadow-md">
             {trip.name}
           </h2>
