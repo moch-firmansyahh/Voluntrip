@@ -18,7 +18,8 @@ import {
   Search,
   X,
   LayoutList,
-  Table
+  Table,
+  Sparkles
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -76,13 +77,48 @@ function formatTimeHHMM(timeStr: string): string {
 }
 
 // Helper to format time strings safely as HH:MM:SS
-function formatTimeHHMMSS(timeStr: string): string {
-  if (!timeStr) return '08:00:00';
-  const parts = timeStr.split(':');
-  const hh = parts[0].padStart(2, '0');
-  const mm = (parts[1] || '00').padStart(2, '0');
-  const ss = (parts[2] || '00').padStart(2, '0');
-  return `${hh}:${mm}:${ss}`;
+function formatTimeHHMMSS(time: string): string {
+  if (!time) return '00:00:00';
+  if (time.length === 5) return `${time}:00`;
+  return time;
+}
+
+function cascadeSequentialTimes(activities: RundownActivity[]): RundownActivity[] {
+  if (!activities || activities.length === 0) return activities;
+
+  const result: RundownActivity[] = [];
+
+  for (let index = 0; index < activities.length; index++) {
+    const act = activities[index];
+    const [sH, sM] = act.start_time.substring(0, 5).split(':').map(Number);
+    const [eH, eM] = act.end_time.substring(0, 5).split(':').map(Number);
+    let durationMinutes = (eH * 60 + eM) - (sH * 60 + sM);
+    if (isNaN(durationMinutes) || durationMinutes <= 0) {
+      durationMinutes = 60;
+    }
+
+    let newStartHHMM = act.start_time.substring(0, 5);
+    if (index > 0) {
+      newStartHHMM = result[index - 1].end_time.substring(0, 5);
+    }
+
+    const [nSH, nSM] = newStartHHMM.split(':').map(Number);
+    const totalEndMins = nSH * 60 + nSM + durationMinutes;
+    const nEH = Math.floor(totalEndMins / 60) % 24;
+    const nEM = totalEndMins % 60;
+
+    const newStartStr = `${newStartHHMM}:00`;
+    const newEndStr = `${nEH.toString().padStart(2, '0')}:${nEM.toString().padStart(2, '0')}:00`;
+
+    result.push({
+      ...act,
+      start_time: newStartStr,
+      end_time: newEndStr,
+      order_index: index,
+    });
+  }
+
+  return result;
 }
 
 // SORTABLE TIMELINE CARD
@@ -359,8 +395,23 @@ export default function RundownEditorClient({ initialTrip, initialDays }: Rundow
     setEditingActivity(null);
     setTitle('');
     setLocation('');
-    setStartTime('08:00');
-    setEndTime('09:00');
+
+    // Auto-fill time from last activity of the day if available
+    const targetDay = days.find(d => d.id === dayId);
+    const dayActs = targetDay?.activities || [];
+    if (dayActs.length > 0) {
+      const lastAct = dayActs[dayActs.length - 1];
+      const lastEnd = formatTimeHHMM(lastAct.end_time); // e.g. "09:00"
+      setStartTime(lastEnd);
+      
+      const [h, m] = lastEnd.split(':').map(Number);
+      const nextH = (h + 1) % 24;
+      setEndTime(`${nextH.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`);
+    } else {
+      setStartTime('08:00');
+      setEndTime('09:00');
+    }
+
     setCost('0');
     setNote('');
     setSuggestions([]);
@@ -559,7 +610,8 @@ export default function RundownEditorClient({ initialTrip, initialDays }: Rundow
     const overIdx = activities.findIndex(a => a.id === overId);
 
     if (activeIdx !== -1 && overIdx !== -1) {
-      const reordered = arrayMove(activities, activeIdx, overIdx);
+      const reorderedRaw = arrayMove(activities, activeIdx, overIdx);
+      const reordered = cascadeSequentialTimes(reorderedRaw);
 
       // Update locally
       setDays(prevDays => {
@@ -572,7 +624,9 @@ export default function RundownEditorClient({ initialTrip, initialDays }: Rundow
       const payload = reordered.map((item, idx) => ({
         id: item.id,
         rundown_day_id: day.id,
-        order_index: idx
+        order_index: idx,
+        start_time: item.start_time,
+        end_time: item.end_time
       }));
 
       try {
@@ -584,6 +638,38 @@ export default function RundownEditorClient({ initialTrip, initialDays }: Rundow
       } catch (error) {
         console.error('Failed to sync reorder:', error);
       }
+    }
+  };
+
+  // Manual one-click trigger to cascade day's activity times sequentially
+  const handleCascadeDayTimes = async (dayIndex: number) => {
+    const day = days[dayIndex];
+    if (!day.activities || day.activities.length === 0) return;
+
+    const cascaded = cascadeSequentialTimes([...day.activities]);
+
+    setDays(prevDays => {
+      const newDays = [...prevDays];
+      newDays[dayIndex].activities = cascaded;
+      return newDays;
+    });
+
+    const payload = cascaded.map((item, idx) => ({
+      id: item.id,
+      rundown_day_id: day.id,
+      order_index: idx,
+      start_time: item.start_time,
+      end_time: item.end_time
+    }));
+
+    try {
+      await fetch('/api/rundown/reorder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ activities: payload })
+      });
+    } catch (error) {
+      console.error('Failed to sync cascade times:', error);
     }
   };
 
@@ -752,6 +838,17 @@ export default function RundownEditorClient({ initialTrip, initialDays }: Rundow
                     </div>
 
                     <div className="flex items-center gap-2">
+                      {day.activities && day.activities.length > 1 && (
+                        <Button 
+                          variant="outline"
+                          onClick={() => handleCascadeDayTimes(dIdx)}
+                          className="rounded-xl border-[oklch(0.90_0.008_70)] text-xs h-9 px-2.5 gap-1.5 cursor-pointer text-slate-600 hover:text-teal-700 hover:bg-teal-50/50"
+                          title="Rapatkan dan urutkan jam berantai otomatis"
+                        >
+                          <Sparkles size={13} className="text-amber-500" /> Rapikan Jam
+                        </Button>
+                      )}
+
                       <Button 
                         variant="ghost"
                         onClick={() => handleDeleteDay(day.id, dIdx + 1)}

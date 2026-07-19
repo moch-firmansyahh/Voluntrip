@@ -41,12 +41,23 @@ export async function POST(request: Request) {
     // Run batch updates in a transaction
     await sql.begin(async (sql: any) => {
       for (const act of activities) {
-        await sql`
-          UPDATE rundown_activities SET
-            rundown_day_id = ${act.rundown_day_id},
-            order_index = ${act.order_index}
-          WHERE id = ${act.id}
-        `;
+        if (act.start_time && act.end_time) {
+          await sql`
+            UPDATE rundown_activities SET
+              rundown_day_id = ${act.rundown_day_id},
+              order_index = ${act.order_index},
+              start_time = ${act.start_time},
+              end_time = ${act.end_time}
+            WHERE id = ${act.id}
+          `;
+        } else {
+          await sql`
+            UPDATE rundown_activities SET
+              rundown_day_id = ${act.rundown_day_id},
+              order_index = ${act.order_index}
+            WHERE id = ${act.id}
+          `;
+        }
       }
     });
 

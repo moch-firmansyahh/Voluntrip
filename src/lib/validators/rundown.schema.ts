@@ -19,6 +19,8 @@ export const activityReorderSchema = z.object({
     id: z.string().uuid(),
     rundown_day_id: z.string().uuid(),
     order_index: z.coerce.number().int(),
+    start_time: z.string().optional(),
+    end_time: z.string().optional(),
   })),
 });
 

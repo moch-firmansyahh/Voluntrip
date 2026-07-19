@@ -94,29 +94,49 @@ export async function PUT(
       const start = new Date(data.start_date);
       const end = new Date(data.end_date);
       const diffTime = Math.abs(end.getTime() - start.getTime());
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+      const newTotalDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
 
-      // Keep existing days that fall into the new date range, delete days that don't
-      // and add new ones.
-      const dayDates: string[] = [];
-      for (let i = 0; i < diffDays; i++) {
-        const dayDate = new Date(start);
-        dayDate.setUTCDate(start.getUTCDate() + i);
-        dayDates.push(dayDate.toISOString().split('T')[0]);
-      }
-
-      // Delete days outside range
-      await sql`
-        DELETE FROM rundown_days 
-        WHERE trip_id = ${tripId} AND NOT (day_date = ANY(${dayDates}))
+      // Fetch existing days ordered by order_index
+      const existingDays = await sql`
+        SELECT id, day_date, order_index
+        FROM rundown_days
+        WHERE trip_id = ${tripId}
+        ORDER BY order_index ASC
       `;
 
-      // Insert new days or update index
-      for (let i = 0; i < dayDates.length; i++) {
+      // Calculate target dates array
+      const targetDates: string[] = [];
+      for (let i = 0; i < newTotalDays; i++) {
+        const dayDate = new Date(start);
+        dayDate.setUTCDate(start.getUTCDate() + i);
+        targetDates.push(dayDate.toISOString().split('T')[0]);
+      }
+
+      // Step A: Update existing days with their new target dates based on order_index
+      for (let i = 0; i < Math.min(existingDays.length, newTotalDays); i++) {
         await sql`
-          INSERT INTO rundown_days (trip_id, day_date, order_index)
-          VALUES (${tripId}, ${dayDates[i]}, ${i})
-          ON CONFLICT (trip_id, day_date) DO UPDATE SET order_index = ${i}
+          UPDATE rundown_days
+          SET day_date = ${targetDates[i]}, order_index = ${i}
+          WHERE id = ${existingDays[i].id}
+        `;
+      }
+
+      // Step B: If new date range is longer, insert extra days
+      if (newTotalDays > existingDays.length) {
+        for (let i = existingDays.length; i < newTotalDays; i++) {
+          await sql`
+            INSERT INTO rundown_days (trip_id, day_date, order_index)
+            VALUES (${tripId}, ${targetDates[i]}, ${i})
+            ON CONFLICT (trip_id, day_date) DO UPDATE SET order_index = ${i}
+          `;
+        }
+      }
+
+      // Step C: If new date range is shorter, delete overflow days
+      if (existingDays.length > newTotalDays) {
+        await sql`
+          DELETE FROM rundown_days
+          WHERE trip_id = ${tripId} AND order_index >= ${newTotalDays}
         `;
       }
     }
