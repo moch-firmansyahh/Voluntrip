@@ -18,8 +18,7 @@ import {
   Search,
   X,
   LayoutList,
-  Table,
-  Sparkles
+  Table
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -81,44 +80,6 @@ function formatTimeHHMMSS(time: string): string {
   if (!time) return '00:00:00';
   if (time.length === 5) return `${time}:00`;
   return time;
-}
-
-function cascadeSequentialTimes(activities: RundownActivity[]): RundownActivity[] {
-  if (!activities || activities.length === 0) return activities;
-
-  const result: RundownActivity[] = [];
-
-  for (let index = 0; index < activities.length; index++) {
-    const act = activities[index];
-    const [sH, sM] = act.start_time.substring(0, 5).split(':').map(Number);
-    const [eH, eM] = act.end_time.substring(0, 5).split(':').map(Number);
-    let durationMinutes = (eH * 60 + eM) - (sH * 60 + sM);
-    if (isNaN(durationMinutes) || durationMinutes <= 0) {
-      durationMinutes = 60;
-    }
-
-    let newStartHHMM = act.start_time.substring(0, 5);
-    if (index > 0) {
-      newStartHHMM = result[index - 1].end_time.substring(0, 5);
-    }
-
-    const [nSH, nSM] = newStartHHMM.split(':').map(Number);
-    const totalEndMins = nSH * 60 + nSM + durationMinutes;
-    const nEH = Math.floor(totalEndMins / 60) % 24;
-    const nEM = totalEndMins % 60;
-
-    const newStartStr = `${newStartHHMM}:00`;
-    const newEndStr = `${nEH.toString().padStart(2, '0')}:${nEM.toString().padStart(2, '0')}:00`;
-
-    result.push({
-      ...act,
-      start_time: newStartStr,
-      end_time: newEndStr,
-      order_index: index,
-    });
-  }
-
-  return result;
 }
 
 // SORTABLE TIMELINE CARD
@@ -610,23 +571,23 @@ export default function RundownEditorClient({ initialTrip, initialDays }: Rundow
     const overIdx = activities.findIndex(a => a.id === overId);
 
     if (activeIdx !== -1 && overIdx !== -1) {
-      const reorderedRaw = arrayMove(activities, activeIdx, overIdx);
-      const reordered = cascadeSequentialTimes(reorderedRaw);
+      const reordered = arrayMove(activities, activeIdx, overIdx).map((item, idx) => ({
+        ...item,
+        order_index: idx
+      }));
 
-      // Update locally
+      // Update locally (keep user-entered start_time and end_time intact)
       setDays(prevDays => {
         const newDays = [...prevDays];
         newDays[dayIndex].activities = reordered;
         return newDays;
       });
 
-      // Sync with API
+      // Sync only order_index with API
       const payload = reordered.map((item, idx) => ({
         id: item.id,
         rundown_day_id: day.id,
-        order_index: idx,
-        start_time: item.start_time,
-        end_time: item.end_time
+        order_index: idx
       }));
 
       try {
@@ -638,38 +599,6 @@ export default function RundownEditorClient({ initialTrip, initialDays }: Rundow
       } catch (error) {
         console.error('Failed to sync reorder:', error);
       }
-    }
-  };
-
-  // Manual one-click trigger to cascade day's activity times sequentially
-  const handleCascadeDayTimes = async (dayIndex: number) => {
-    const day = days[dayIndex];
-    if (!day.activities || day.activities.length === 0) return;
-
-    const cascaded = cascadeSequentialTimes([...day.activities]);
-
-    setDays(prevDays => {
-      const newDays = [...prevDays];
-      newDays[dayIndex].activities = cascaded;
-      return newDays;
-    });
-
-    const payload = cascaded.map((item, idx) => ({
-      id: item.id,
-      rundown_day_id: day.id,
-      order_index: idx,
-      start_time: item.start_time,
-      end_time: item.end_time
-    }));
-
-    try {
-      await fetch('/api/rundown/reorder', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ activities: payload })
-      });
-    } catch (error) {
-      console.error('Failed to sync cascade times:', error);
     }
   };
 
@@ -838,17 +767,6 @@ export default function RundownEditorClient({ initialTrip, initialDays }: Rundow
                     </div>
 
                     <div className="flex items-center gap-2">
-                      {day.activities && day.activities.length > 1 && (
-                        <Button 
-                          variant="outline"
-                          onClick={() => handleCascadeDayTimes(dIdx)}
-                          className="rounded-xl border-[oklch(0.90_0.008_70)] text-xs h-9 px-2.5 gap-1.5 cursor-pointer text-slate-600 hover:text-teal-700 hover:bg-teal-50/50"
-                          title="Rapatkan dan urutkan jam berantai otomatis"
-                        >
-                          <Sparkles size={13} className="text-amber-500" /> Rapikan Jam
-                        </Button>
-                      )}
-
                       <Button 
                         variant="ghost"
                         onClick={() => handleDeleteDay(day.id, dIdx + 1)}
