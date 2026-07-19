@@ -36,8 +36,15 @@ export default function SidebarLayout({ children, user }: SidebarLayoutProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
 
-  const handleLogout = () => {
-    fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        keepalive: true,
+      });
+    } catch (e) {
+      console.error(e);
+    }
     window.location.href = '/login';
   };
 
