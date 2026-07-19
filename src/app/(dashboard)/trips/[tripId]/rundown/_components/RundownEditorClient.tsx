@@ -37,8 +37,7 @@ import {
   DragOverlay,
   useSensor,
   useSensors,
-  MouseSensor,
-  TouchSensor
+  PointerSensor
 } from '@dnd-kit/core';
 import {
   SortableContext,
@@ -297,19 +296,13 @@ export default function RundownEditorClient({ initialTrip, initialDays }: Rundow
     setConfirmOpen(true);
   }, []);
 
-  const mouseSensor = useSensor(MouseSensor, {
+  const pointerSensor = useSensor(PointerSensor, {
     activationConstraint: {
-      delay: 500, // 500ms long-press required
-      tolerance: 5,
+      delay: 500,
+      tolerance: 8,
     },
   });
-  const touchSensor = useSensor(TouchSensor, {
-    activationConstraint: {
-      delay: 500, // 500ms long-press required on touch screens
-      tolerance: 5,
-    },
-  });
-  const sensors = useSensors(mouseSensor, touchSensor);
+  const sensors = useSensors(pointerSensor);
 
   const fetchRundownData = useCallback(async (silent = false) => {
     try {
