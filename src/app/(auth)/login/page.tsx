@@ -222,7 +222,7 @@ export default function LoginPage() {
                 disabled={loading}
               />
               <Label htmlFor="rememberMe" className="text-xs font-semibold text-[oklch(0.48_0.01_40)] select-none cursor-pointer">
-                Tetap Masuk
+                Ingat saya selama 30 hari
               </Label>
             </div>
           </CardContent>

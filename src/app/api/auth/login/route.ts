@@ -39,12 +39,16 @@ export async function POST(request: Request) {
       );
     }
 
-    // Generate JWT token
-    const token = signToken({
-      userId: user.id,
-      username: user.username,
-      fullName: user.full_name,
-    });
+    // Generate JWT token & set cookie options based on rememberMe
+    const isRemember = Boolean(rememberMe);
+    const token = signToken(
+      {
+        userId: user.id,
+        username: user.username,
+        fullName: user.full_name,
+      },
+      isRemember ? '30d' : '1d'
+    );
 
     // Set cookie
     const cookieStore = await cookies();
@@ -55,8 +59,8 @@ export async function POST(request: Request) {
       sameSite: 'lax',
     };
 
-    if (rememberMe) {
-      cookieOptions.maxAge = 60 * 60 * 24 * 7; // 7 days (persistent)
+    if (isRemember) {
+      cookieOptions.maxAge = 60 * 60 * 24 * 30; // 30 days persistent
     }
 
     cookieStore.set('voluntrip_session', token, cookieOptions);

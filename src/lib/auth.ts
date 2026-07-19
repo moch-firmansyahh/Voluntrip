@@ -27,11 +27,10 @@ export function comparePassword(password: string, hash: string): boolean {
 }
 
 /**
- * Sign user session data into a JWT token
+ * Sign user session data into a JWT token with custom expiry (default '7d')
  */
-export function signToken(payload: UserSessionPayload): string {
-  // Session lasts for 7 days
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' });
+export function signToken(payload: UserSessionPayload, expiresIn: string = '7d'): string {
+  return jwt.sign(payload, JWT_SECRET, { expiresIn: expiresIn as any });
 }
 
 /**
