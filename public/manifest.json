@@ -1,0 +1,21 @@
+{
+  "name": "Voluntrip",
+  "short_name": "Voluntrip",
+  "description": "Aplikasi perencana trip dan rundown perjalanan",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#c17a5f",
+  "icons": [
+    {
+      "src": "/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

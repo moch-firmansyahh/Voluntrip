@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Poppins, Inter } from "next/font/google";
 import "./globals.css";
 
@@ -15,8 +15,18 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Voluntrip - Travel Planner & Budgeting",
-  description: "Plan your trip rundown, activities, and budget easily with split bill support.",
+  title: "Voluntrip",
+  description: "Aplikasi perencana trip dan rundown perjalanan",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Voluntrip",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#c17a5f",
 };
 
 export default function RootLayout({
