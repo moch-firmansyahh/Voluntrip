@@ -59,6 +59,7 @@ export default function SidebarLayout({ children, user }: SidebarLayoutProps) {
   const tripNavItems = tripId ? [
     { name: 'Trip Overview', href: `/trips/${tripId}`, icon: Compass },
     { name: 'Itinerary', href: `/trips/${tripId}/rundown`, icon: Calendar },
+    { name: 'Pengeluaran', href: `/trips/${tripId}/expenses`, icon: DollarSign },
   ] : [];
 
   const isActive = (href: string) => pathname === href;

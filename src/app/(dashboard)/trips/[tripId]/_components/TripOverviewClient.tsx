@@ -383,10 +383,10 @@ export default function TripOverviewClient({ initialTrip, initialRundown }: Trip
       </div>
 
       {/* Main Options & Sharing Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Left: Planning Shortcut Card */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left: Itinerary Shortcut Card */}
         <div className="flex flex-col space-y-4">
-          <h3 className="text-lg font-bold font-heading">Menu Perencanaan</h3>
+          <h3 className="text-lg font-bold font-heading">Itinerary</h3>
           
           <Link href={`/trips/${tripId}/rundown`} className="group block flex-1">
             <Card className="rounded-3xl border-[oklch(0.90_0.008_70)] shadow-sm bg-white hover:shadow-md transition-all p-6 flex flex-col justify-between h-full min-h-[220px]">
@@ -396,15 +396,41 @@ export default function TripOverviewClient({ initialTrip, initialRundown }: Trip
                 </div>
                 <div>
                   <h4 className="font-bold text-base text-[oklch(0.22_0.01_40)] group-hover:text-[oklch(0.70_0.08_40)] transition-colors">
-                    Itinerary & Anggaran
+                    Itinerary & Jadwal
                   </h4>
                   <p className="text-xs text-[oklch(0.48_0.01_40)] mt-1.5 leading-relaxed">
-                    Susun jadwal kegiatan harian trip Anda secara visual, atur urutan aktivitas dengan drag and drop, serta kelola anggaran terpadu.
+                    Susun jadwal kegiatan harian trip Anda dalam Tampilan Timeline atau Tabel interaktif.
                   </p>
                 </div>
               </div>
               <div className="flex items-center gap-1 text-xs font-semibold text-[oklch(0.70_0.08_40)] pt-4 group-hover:translate-x-1 transition-transform border-t border-[oklch(0.90_0.008_70)]/30 mt-4">
                 Atur Itinerary Hari & Kegiatan <ArrowRight size={14} />
+              </div>
+            </Card>
+          </Link>
+        </div>
+
+        {/* Middle: Expenses Shortcut Card */}
+        <div className="flex flex-col space-y-4">
+          <h3 className="text-lg font-bold font-heading">Pengeluaran</h3>
+          
+          <Link href={`/trips/${tripId}/expenses`} className="group block flex-1">
+            <Card className="rounded-3xl border-[oklch(0.90_0.008_70)] shadow-sm bg-white hover:shadow-md transition-all p-6 flex flex-col justify-between h-full min-h-[220px]">
+              <div className="space-y-4">
+                <div className="w-12 h-12 rounded-2xl bg-teal-50 flex items-center justify-center text-teal-600 shrink-0">
+                  <DollarSign size={24} />
+                </div>
+                <div>
+                  <h4 className="font-bold text-base text-[oklch(0.22_0.01_40)] group-hover:text-teal-600 transition-colors">
+                    Tabel Pengeluaran
+                  </h4>
+                  <p className="text-xs text-[oklch(0.48_0.01_40)] mt-1.5 leading-relaxed">
+                    Pantau rincian biaya otomatis dari itinerary & catat pengeluaran tambahan terpadu.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-1 text-xs font-semibold text-teal-600 pt-4 group-hover:translate-x-1 transition-transform border-t border-[oklch(0.90_0.008_70)]/30 mt-4">
+                Buka Tabel Pengeluaran <ArrowRight size={14} />
               </div>
             </Card>
           </Link>

@@ -16,7 +16,9 @@ import {
   Edit2,
   ExternalLink,
   Search,
-  X
+  X,
+  LayoutList,
+  Table
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -200,6 +202,9 @@ export default function RundownEditorClient({ initialTrip, initialDays }: Rundow
   const [days, setDays] = useState<RundownDay[]>(initialDays);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // View mode switcher: 'timeline' | 'table'
+  const [viewMode, setViewMode] = useState<'timeline' | 'table'>('timeline');
 
   // Modal states
   const [isOpen, setIsOpen] = useState(false);
@@ -632,6 +637,32 @@ export default function RundownEditorClient({ initialTrip, initialDays }: Rundow
           </h2>
           <p className="text-xs text-[oklch(0.48_0.01_40)] font-medium">Satukan waktu kunjungan, lokasi, dan estimasi biaya per agenda</p>
         </div>
+
+        {/* View Mode Toggle Buttons */}
+        <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-2xl border border-slate-200/80 self-start sm:self-auto shadow-sm">
+          <button
+            type="button"
+            onClick={() => setViewMode('timeline')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+              viewMode === 'timeline'
+                ? 'bg-white text-[oklch(0.22_0.01_40)] shadow-sm'
+                : 'text-[oklch(0.48_0.01_40)] hover:text-[oklch(0.22_0.01_40)]'
+            }`}
+          >
+            <LayoutList size={14} /> Timeline Cards
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewMode('table')}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+              viewMode === 'table'
+                ? 'bg-[oklch(0.38_0.06_210)] text-white shadow-sm'
+                : 'text-[oklch(0.48_0.01_40)] hover:text-[oklch(0.22_0.01_40)]'
+            }`}
+          >
+            <Table size={14} /> Tabel View
+          </button>
+        </div>
       </div>
 
       {/* Integrated Budget Summary Card */}
@@ -740,29 +771,114 @@ export default function RundownEditorClient({ initialTrip, initialDays }: Rundow
                 </CardHeader>
 
                 <CardContent className="p-6">
-                  <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-                    <SortableContext 
-                      items={day.activities?.map(a => a.id) || []} 
-                      strategy={verticalListSortingStrategy}
-                    >
-                      <div className="space-y-3">
-                        {day.activities && day.activities.length > 0 ? (
-                          day.activities.map((activity) => (
-                            <SortableActivityCard 
-                              key={activity.id} 
-                              activity={activity} 
-                              onDelete={handleDeleteActivity}
-                              onEdit={openEditModal}
-                            />
-                          ))
-                        ) : (
-                          <div className="p-8 text-center text-xs text-[oklch(0.48_0.01_40)] bg-[oklch(0.98_0.006_70)]/30 rounded-2xl border border-dashed border-[oklch(0.90_0.008_70)]/60">
-                            Belum ada agenda kegiatan untuk hari ini.
-                          </div>
-                        )}
+                  {viewMode === 'table' ? (
+                    /* Table View Renderer */
+                    day.activities && day.activities.length > 0 ? (
+                      <div className="overflow-x-auto rounded-2xl border border-[oklch(0.90_0.008_70)]/60">
+                        <table className="w-full text-left border-collapse">
+                          <thead>
+                            <tr className="bg-[oklch(0.98_0.006_70)]/80 border-b border-[oklch(0.90_0.008_70)]/60 text-[10px] font-extrabold uppercase tracking-wider text-[oklch(0.40_0.02_40)]">
+                              <th className="py-3 px-4">Jam</th>
+                              <th className="py-3 px-4">Nama Agenda / Kegiatan</th>
+                              <th className="py-3 px-4">Lokasi</th>
+                              <th className="py-3 px-4 text-right">Estimasi Biaya</th>
+                              <th className="py-3 px-4">Catatan</th>
+                              <th className="py-3 px-4 text-center">Aksi</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-[oklch(0.90_0.008_70)]/40 text-xs">
+                            {day.activities.map((act) => (
+                              <tr key={act.id} className="hover:bg-slate-50/80 transition-colors">
+                                <td className="py-3 px-4 whitespace-nowrap font-bold text-[oklch(0.38_0.06_210)]">
+                                  <span className="inline-flex items-center gap-1 bg-slate-100 px-2 py-0.5 rounded-md text-[11px]">
+                                    <Clock size={11} />
+                                    {act.start_time.substring(0, 5)} - {act.end_time.substring(0, 5)}
+                                  </span>
+                                </td>
+                                <td className="py-3 px-4 font-extrabold text-[oklch(0.22_0.01_40)]">
+                                  {act.title}
+                                </td>
+                                <td className="py-3 px-4 text-slate-600">
+                                  {act.location ? (
+                                    <a 
+                                      href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(act.location)}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="inline-flex items-center gap-1 text-teal-600 hover:underline font-medium"
+                                    >
+                                      <MapPin size={11} className="text-orange-500 shrink-0" />
+                                      <span>{act.location}</span>
+                                    </a>
+                                  ) : (
+                                    <span className="text-slate-300">-</span>
+                                  )}
+                                </td>
+                                <td className="py-3 px-4 text-right font-bold font-heading text-[oklch(0.22_0.01_40)] whitespace-nowrap">
+                                  {act.cost > 0 ? (
+                                    <span className="text-teal-700">{formatIDR(parseFloat(act.cost as any || 0))}</span>
+                                  ) : (
+                                    <span className="text-slate-400 font-normal">Gratis</span>
+                                  )}
+                                </td>
+                                <td className="py-3 px-4 text-slate-500 italic max-w-[200px] truncate">
+                                  {act.note || '-'}
+                                </td>
+                                <td className="py-3 px-4 text-center whitespace-nowrap">
+                                  <div className="flex items-center justify-center gap-1">
+                                    <Button 
+                                      variant="ghost" 
+                                      size="sm" 
+                                      onClick={() => openEditModal(act)}
+                                      className="h-7 px-2 rounded-lg text-slate-600 hover:bg-slate-100 text-[11px] font-bold gap-1"
+                                    >
+                                      <Edit2 size={12} /> Edit
+                                    </Button>
+                                    <Button 
+                                      variant="ghost" 
+                                      size="sm" 
+                                      onClick={() => handleDeleteActivity(act.id)}
+                                      className="h-7 px-2 rounded-lg text-red-500 hover:bg-red-50 text-[11px] font-bold gap-1"
+                                    >
+                                      <Trash2 size={12} /> Hapus
+                                    </Button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
                       </div>
-                    </SortableContext>
-                  </DndContext>
+                    ) : (
+                      <div className="p-8 text-center text-xs text-[oklch(0.48_0.01_40)] bg-[oklch(0.98_0.006_70)]/30 rounded-2xl border border-dashed border-[oklch(0.90_0.008_70)]/60">
+                        Belum ada agenda kegiatan untuk hari ini.
+                      </div>
+                    )
+                  ) : (
+                    /* Timeline Drag-and-Drop Cards View */
+                    <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+                      <SortableContext 
+                        items={day.activities?.map(a => a.id) || []} 
+                        strategy={verticalListSortingStrategy}
+                      >
+                        <div className="space-y-3">
+                          {day.activities && day.activities.length > 0 ? (
+                            day.activities.map((activity) => (
+                              <SortableActivityCard 
+                                key={activity.id} 
+                                activity={activity} 
+                                onDelete={handleDeleteActivity}
+                                onEdit={openEditModal}
+                              />
+                            ))
+                          ) : (
+                            <div className="p-8 text-center text-xs text-[oklch(0.48_0.01_40)] bg-[oklch(0.98_0.006_70)]/30 rounded-2xl border border-dashed border-[oklch(0.90_0.008_70)]/60">
+                              Belum ada agenda kegiatan untuk hari ini.
+                            </div>
+                          )}
+                        </div>
+                      </SortableContext>
+                    </DndContext>
+                  )}
                 </CardContent>
               </Card>
             );
