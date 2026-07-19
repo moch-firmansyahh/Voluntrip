@@ -22,6 +22,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Trip } from '@/types/trip';
+import ConfirmDateChangeDialog, { DayPreviewItem } from '@/components/shared/ConfirmDateChangeDialog';
 
 function formatIDR(amount: number) {
   return new Intl.NumberFormat('id-ID', {
@@ -67,6 +68,11 @@ export default function TripsListClient({ initialTrips }: TripsListClientProps) 
   const [confirmTitle, setConfirmTitle] = useState('');
   const [confirmMessage, setConfirmMessage] = useState('');
   const [onConfirm, setOnConfirm] = useState<(() => void) | null>(null);
+
+  // Reduce days confirmation dialog states
+  const [reduceDialogOpen, setReduceDialogOpen] = useState(false);
+  const [reduceDaysList, setReduceDaysList] = useState<DayPreviewItem[]>([]);
+  const [neededDeletionsCount, setNeededDeletionsCount] = useState(0);
 
   const showConfirm = (title: string, message: string, callback: () => void) => {
     setConfirmTitle(title);
@@ -166,6 +172,52 @@ function getLocalDateString(dateInput: Date | string): string {
     e.preventDefault();
     if (!selectedTrip) return;
 
+    if (new Date(endDate) < new Date(startDate)) {
+      alert('Tanggal selesai tidak boleh lebih awal dari tanggal mulai!');
+      return;
+    }
+
+    const startOld = new Date(selectedTrip.start_date);
+    const endOld = new Date(selectedTrip.end_date);
+    const oldTotalDays = Math.ceil(Math.abs(endOld.getTime() - startOld.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+
+    const startNew = new Date(startDate);
+    const endNew = new Date(endDate);
+    const newTotalDays = Math.ceil(Math.abs(endNew.getTime() - startNew.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+
+    if (newTotalDays < oldTotalDays) {
+      // Fetch rundown days preview
+      try {
+        setFormLoading(true);
+        const res = await fetch(`/api/rundown?tripId=${selectedTrip.id}`);
+        if (res.ok) {
+          const daysData = await res.json();
+          const previewItems: DayPreviewItem[] = (daysData || []).map((d: any, idx: number) => ({
+            id: d.id,
+            day_date: d.day_date,
+            order_index: d.order_index ?? idx,
+            activityCount: d.activities?.length || 0,
+          }));
+
+          setReduceDaysList(previewItems);
+          setNeededDeletionsCount(oldTotalDays - newTotalDays);
+          setReduceDialogOpen(true);
+          setFormLoading(false);
+          return; // Pause submit, wait for dialog confirmation
+        }
+      } catch (err) {
+        console.error('Failed to fetch rundown for reduction dialog:', err);
+      } finally {
+        setFormLoading(false);
+      }
+    }
+
+    // Direct submit if no day reduction needed
+    await executeUpdateTrip([]);
+  };
+
+  const executeUpdateTrip = async (deletedDayIds: string[]) => {
+    if (!selectedTrip) return;
     setFormLoading(true);
     try {
       const res = await fetch(`/api/trips/${selectedTrip.id}`, {
@@ -179,6 +231,7 @@ function getLocalDateString(dateInput: Date | string): string {
           cover_image: coverImage || undefined,
           budget_total: parseBudgetShorthand(budgetTotal),
           expense_mode: expenseMode,
+          deletedDayIds,
         }),
       });
 
@@ -186,6 +239,7 @@ function getLocalDateString(dateInput: Date | string): string {
       if (!res.ok) throw new Error(data.error || 'Gagal mengubah trip');
 
       setIsEditOpen(false);
+      setReduceDialogOpen(false);
       resetForm();
       fetchTrips();
     } catch (err: any) {
@@ -600,6 +654,15 @@ function getLocalDateString(dateInput: Date | string): string {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      {/* Confirm Date Reduction Dialog */}
+      <ConfirmDateChangeDialog
+        open={reduceDialogOpen}
+        onOpenChange={setReduceDialogOpen}
+        days={reduceDaysList}
+        neededDeletionsCount={neededDeletionsCount}
+        onConfirm={(deletedIds) => executeUpdateTrip(deletedIds)}
+        onCancel={() => setReduceDialogOpen(false)}
+      />
     </div>
   );
 }

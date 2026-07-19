@@ -105,10 +105,10 @@ export async function PUT(
       SELECT location, latitude, longitude FROM rundown_activities WHERE id = ${activityId}
     `;
     
-    let latitude = currentActivity[0]?.latitude || null;
-    let longitude = currentActivity[0]?.longitude || null;
+    let latitude = data.latitude !== undefined ? data.latitude : (currentActivity[0]?.latitude || null);
+    let longitude = data.longitude !== undefined ? data.longitude : (currentActivity[0]?.longitude || null);
 
-    if (data.location !== currentActivity[0]?.location) {
+    if (data.location !== currentActivity[0]?.location && (data.latitude === undefined || data.latitude === null)) {
       if (data.location) {
         const coords = await geocodeLocation(data.location);
         if (coords) {

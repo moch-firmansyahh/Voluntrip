@@ -132,10 +132,17 @@ export async function POST(request: Request) {
     `;
     const nextIndex = (maxOrder[0]?.max_idx !== null ? maxOrder[0].max_idx : -1) + 1;
 
-    // Geocode location on server
-    const coords = data.location ? await geocodeLocation(data.location) : null;
-    const latitude = coords ? coords.lat : null;
-    const longitude = coords ? coords.lon : null;
+    // Use incoming latitude and longitude if provided by LocationAutocomplete, else fallback to server geocoding
+    let latitude = data.latitude !== undefined ? data.latitude : null;
+    let longitude = data.longitude !== undefined ? data.longitude : null;
+
+    if ((latitude === null || longitude === null) && data.location) {
+      const coords = await geocodeLocation(data.location);
+      if (coords) {
+        latitude = coords.lat;
+        longitude = coords.lon;
+      }
+    }
 
     // Insert activity
     const activities = await sql`

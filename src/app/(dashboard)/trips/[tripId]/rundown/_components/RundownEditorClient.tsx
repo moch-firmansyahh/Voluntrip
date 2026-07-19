@@ -27,11 +27,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Trip } from '@/types/trip';
 import { RundownDay, RundownActivity } from '@/types/rundown';
+import LocationAutocomplete from '@/components/shared/LocationAutocomplete';
 
 // DND kit imports for sorting table rows
 import {
   DndContext,
   DragEndEvent,
+  DragStartEvent,
+  DragOverlay,
   useSensor,
   useSensors,
   MouseSensor,
@@ -82,6 +85,60 @@ function formatTimeHHMMSS(time: string): string {
   return time;
 }
 
+function recalculateSchedule(
+  activities: RundownActivity[],
+  dayStartTime: string
+): { success: boolean; activities?: RundownActivity[]; error?: string } {
+  if (!activities || activities.length === 0) {
+    return { success: true, activities: [] };
+  }
+
+  const result: RundownActivity[] = [];
+
+  for (let index = 0; index < activities.length; index++) {
+    const act = activities[index];
+
+    // Original duration in minutes
+    const [sH, sM] = act.start_time.substring(0, 5).split(':').map(Number);
+    const [eH, eM] = act.end_time.substring(0, 5).split(':').map(Number);
+    let durationMinutes = (eH * 60 + eM) - (sH * 60 + sM);
+    if (isNaN(durationMinutes) || durationMinutes <= 0) {
+      durationMinutes = 60;
+    }
+
+    let newStartHHMM = dayStartTime;
+    if (index > 0) {
+      newStartHHMM = result[index - 1].end_time.substring(0, 5);
+    }
+
+    const [nSH, nSM] = newStartHHMM.split(':').map(Number);
+    const totalEndMins = nSH * 60 + nSM + durationMinutes;
+
+    // VALIDATION: Check if end time exceeds 23:59 (1439 mins)
+    if (totalEndMins > 23 * 60 + 59) {
+      return {
+        success: false,
+        error: 'Nggak bisa, total durasi activity di hari ini lewat jam 23:59',
+      };
+    }
+
+    const nEH = Math.floor(totalEndMins / 60) % 24;
+    const nEM = totalEndMins % 60;
+
+    const newStartStr = `${newStartHHMM}:00`;
+    const newEndStr = `${nEH.toString().padStart(2, '0')}:${nEM.toString().padStart(2, '0')}:00`;
+
+    result.push({
+      ...act,
+      start_time: newStartStr,
+      end_time: newEndStr,
+      order_index: index,
+    });
+  }
+
+  return { success: true, activities: result };
+}
+
 // SORTABLE TIMELINE CARD
 interface SortableRowProps {
   activity: RundownActivity;
@@ -102,26 +159,25 @@ const SortableActivityCard = React.memo(function SortableActivityCard({ activity
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.35 : 1,
-    zIndex: isDragging ? 10 : 1,
   };
 
   return (
     <div 
       ref={setNodeRef} 
       style={style} 
-      className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 border border-[oklch(0.90_0.008_70)]/60 rounded-2xl hover:shadow-sm transition-all bg-white animate-fade-in"
+      {...attributes} 
+      {...listeners} 
+      className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 border rounded-2xl transition-all bg-white touch-none select-none ${
+        isDragging
+          ? 'opacity-25 border-2 border-dashed border-[oklch(0.70_0.08_40)] bg-slate-50 shadow-inner'
+          : 'border-[oklch(0.90_0.008_70)]/60 hover:shadow-sm'
+      }`}
     >
       <div className="flex items-start sm:items-center gap-3 min-w-0 flex-1">
-        {/* Drag Handle */}
-        <button 
-          type="button" 
-          {...attributes} 
-          {...listeners} 
-          className="cursor-grab text-[oklch(0.48_0.01_40)] hover:text-[oklch(0.22_0.01_40)] p-1.5 rounded hover:bg-[oklch(0.94_0.008_70)] outline-none mt-0.5 sm:mt-0"
-        >
+        {/* Drag Handle Icon */}
+        <div className="text-[oklch(0.48_0.01_40)] p-1 rounded shrink-0 mt-0.5 sm:mt-0">
           <GripVertical size={16} />
-        </button>
+        </div>
 
         {/* Time and Title info */}
         <div className="space-y-1 min-w-0 flex-1">
@@ -148,6 +204,8 @@ const SortableActivityCard = React.memo(function SortableActivityCard({ activity
                 href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(activity.location)}`}
                 target="_blank"
                 rel="noopener noreferrer"
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={(e) => e.stopPropagation()}
                 className="inline-flex items-center gap-1 text-[10px] text-teal-600 hover:text-teal-700 hover:underline font-medium cursor-pointer"
               >
                 <MapPin size={11} className="text-orange-500 shrink-0" />
@@ -164,11 +222,14 @@ const SortableActivityCard = React.memo(function SortableActivityCard({ activity
       </div>
 
       {/* Action Buttons */}
-      <div className="flex items-center justify-end gap-1.5 border-t sm:border-t-0 pt-2 sm:pt-0 border-[oklch(0.90_0.008_70)]/30 shrink-0">
+      <div 
+        className="flex items-center justify-end gap-1.5 border-t sm:border-t-0 pt-2 sm:pt-0 border-[oklch(0.90_0.008_70)]/30 shrink-0"
+        onPointerDown={(e) => e.stopPropagation()}
+      >
         <Button 
           variant="ghost" 
           size="sm" 
-          onClick={() => onEdit(activity)}
+          onClick={(e) => { e.stopPropagation(); onEdit(activity); }}
           className="text-[oklch(0.48_0.01_40)] hover:text-[oklch(0.22_0.01_40)] hover:bg-[oklch(0.94_0.008_70)] rounded-xl h-8 px-2 gap-1 text-[11px] font-bold"
         >
           <Edit2 size={12} /> Edit
@@ -176,7 +237,7 @@ const SortableActivityCard = React.memo(function SortableActivityCard({ activity
         <Button 
           variant="ghost" 
           size="sm" 
-          onClick={() => onDelete(activity.id)}
+          onClick={(e) => { e.stopPropagation(); onDelete(activity.id); }}
           className="text-red-500 hover:text-red-600 hover:bg-red-50 rounded-xl h-8 px-2 gap-1 text-[11px] font-bold"
         >
           <Trash2 size={12} /> Hapus
@@ -203,10 +264,22 @@ export default function RundownEditorClient({ initialTrip, initialDays }: Rundow
   // View mode switcher: 'timeline' | 'table'
   const [viewMode, setViewMode] = useState<'timeline' | 'table'>('timeline');
 
+  // Active activity for DragOverlay
+  const [activeActivity, setActiveActivity] = useState<RundownActivity | null>(null);
+
   // Modal states
   const [isOpen, setIsOpen] = useState(false);
   const [editingActivity, setEditingActivity] = useState<RundownActivity | null>(null);
-  const [selectedDayId, setSelectedDayId] = useState<string | null>(null);
+  const [selectedDayId, setSelectedDayId] = useState<string>('');
+  const [title, setTitle] = useState('');
+  const [location, setLocation] = useState('');
+  const [latitude, setLatitude] = useState<number | null>(null);
+  const [longitude, setLongitude] = useState<number | null>(null);
+  const [startTime, setStartTime] = useState('08:00');
+  const [endTime, setEndTime] = useState('09:00');
+  const [cost, setCost] = useState('0');
+  const [note, setNote] = useState('');
+  const [formLoading, setFormLoading] = useState(false);
 
   // Custom confirm states
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -223,107 +296,17 @@ export default function RundownEditorClient({ initialTrip, initialDays }: Rundow
     });
     setConfirmOpen(true);
   }, []);
-  
-  // Form states
-  const [title, setTitle] = useState('');
-  const [location, setLocation] = useState('');
-  const [startTime, setStartTime] = useState('08:00');
-  const [endTime, setEndTime] = useState('09:00');
-  const [cost, setCost] = useState('0');
-  const [note, setNote] = useState('');
-  const [formLoading, setFormLoading] = useState(false);
-
-  // Suggestions search states
-  const [suggestions, setSuggestions] = useState<any[]>([]);
-  const [searchLoading, setSearchLoading] = useState(false);
-  const locationSelectedRef = useRef(false);
-
-  // Debounced search for locations using free Nominatim API with fuzzy fallback
-  useEffect(() => {
-    if (!location || location.length < 3) {
-      setSuggestions([]);
-      return;
-    }
-    
-    // Skip fetching if user just selected a location from the dropdown
-    if (locationSelectedRef.current) {
-      locationSelectedRef.current = false;
-      return;
-    }
-
-    const timer = setTimeout(async () => {
-      setSearchLoading(true);
-      try {
-        const headers = { 'Accept-Language': 'id-ID,id;q=0.9,en;q=0.8' };
-        
-        const res = await fetch(
-          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(location)}&limit=6&addressdetails=1`,
-          { headers }
-        );
-        
-        if (res.ok) {
-          const data = await res.json();
-          
-          if (data && data.length > 0) {
-            setSuggestions(data);
-          } else {
-            const words = location.trim().split(/\s+/).filter((w: string) => w.length >= 3);
-            
-            if (words.length >= 2) {
-              const fallbackQuery = words.slice(1).join(' ');
-              const fallbackRes = await fetch(
-                `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(fallbackQuery)}&limit=6&addressdetails=1`,
-                { headers }
-              );
-              
-              if (fallbackRes.ok) {
-                const fallbackData = await fallbackRes.json();
-                
-                if (fallbackData && fallbackData.length > 0) {
-                  setSuggestions(fallbackData);
-                } else {
-                  const longestWord = words.reduce((a: string, b: string) => a.length >= b.length ? a : b);
-                  const keywordRes = await fetch(
-                    `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(longestWord)}&limit=6&countrycodes=id&addressdetails=1`,
-                    { headers }
-                  );
-                  
-                  if (keywordRes.ok) {
-                    const keywordData = await keywordRes.json();
-                    setSuggestions(keywordData || []);
-                  }
-                }
-              }
-            } else {
-              setSuggestions([]);
-            }
-          }
-        }
-      } catch (err) {
-        console.error('Error fetching location suggestions:', err);
-      } finally {
-        setSearchLoading(false);
-      }
-    }, 400);
-
-    return () => clearTimeout(timer);
-  }, [location]);
-
-  const selectLocation = (displayName: string) => {
-    locationSelectedRef.current = true;
-    setLocation(displayName);
-    setSuggestions([]);
-  };
 
   const mouseSensor = useSensor(MouseSensor, {
     activationConstraint: {
-      distance: 8,
+      delay: 500, // 500ms long-press required
+      tolerance: 5,
     },
   });
   const touchSensor = useSensor(TouchSensor, {
     activationConstraint: {
-      delay: 300, // 300ms long press to start dragging on mobile
-      tolerance: 8, // Allow up to 8px drag tolerance during long press
+      delay: 500, // 500ms long-press required on touch screens
+      tolerance: 5,
     },
   });
   const sensors = useSensors(mouseSensor, touchSensor);
@@ -356,6 +339,8 @@ export default function RundownEditorClient({ initialTrip, initialDays }: Rundow
     setEditingActivity(null);
     setTitle('');
     setLocation('');
+    setLatitude(null);
+    setLongitude(null);
 
     // Auto-fill time from last activity of the day if available
     const targetDay = days.find(d => d.id === dayId);
@@ -375,7 +360,6 @@ export default function RundownEditorClient({ initialTrip, initialDays }: Rundow
 
     setCost('0');
     setNote('');
-    setSuggestions([]);
     setIsOpen(true);
   };
 
@@ -385,11 +369,12 @@ export default function RundownEditorClient({ initialTrip, initialDays }: Rundow
     setSelectedDayId(activity.rundown_day_id);
     setTitle(activity.title);
     setLocation(activity.location || '');
+    setLatitude(activity.latitude || null);
+    setLongitude(activity.longitude || null);
     setStartTime(formatTimeHHMM(activity.start_time));
     setEndTime(formatTimeHHMM(activity.end_time));
     setCost(activity.cost.toString());
     setNote(activity.note || '');
-    setSuggestions([]);
     setIsOpen(true);
   }, []);
 
@@ -421,6 +406,8 @@ export default function RundownEditorClient({ initialTrip, initialDays }: Rundow
                   ...act,
                   title,
                   location: location || null,
+                  latitude,
+                  longitude,
                   start_time: formatTimeHHMMSS(startTime),
                   end_time: formatTimeHHMMSS(endTime),
                   cost: parsedCost,
@@ -435,18 +422,19 @@ export default function RundownEditorClient({ initialTrip, initialDays }: Rundow
       }));
     } else {
       // Create mode optimistic update
+      const targetDay = days.find(d => d.id === selectedDayId);
       const tempActivity: RundownActivity = {
         id: `temp-${Date.now()}`,
         rundown_day_id: selectedDayId,
         title,
         location: location || null,
+        latitude,
+        longitude,
         start_time: formatTimeHHMMSS(startTime),
         end_time: formatTimeHHMMSS(endTime),
         cost: parsedCost,
         note: note || null,
-        order_index: (days.find(d => d.id === selectedDayId)?.activities?.length || 0) + 1,
-        latitude: null,
-        longitude: null
+        order_index: (targetDay?.activities?.length || 0),
       };
 
       setDays(prevDays => prevDays.map(day => {
@@ -474,6 +462,8 @@ export default function RundownEditorClient({ initialTrip, initialDays }: Rundow
           rundownDayId: selectedDayId,
           title,
           location,
+          latitude,
+          longitude,
           start_time: startTime,
           end_time: endTime,
           cost: parsedCost,
@@ -547,8 +537,15 @@ export default function RundownEditorClient({ initialTrip, initialDays }: Rundow
     );
   };
 
-  // Drag & Drop Handler (Within the same day)
+  // Drag & Drop Handlers
+  const handleDragStart = (event: DragStartEvent) => {
+    const { active } = event;
+    const act = days.flatMap(d => d.activities || []).find(a => a.id === active.id);
+    if (act) setActiveActivity(act);
+  };
+
   const handleDragEnd = async (event: DragEndEvent) => {
+    setActiveActivity(null);
     const { active, over } = event;
     if (!over || active.id === over.id) return;
 
@@ -571,23 +568,36 @@ export default function RundownEditorClient({ initialTrip, initialDays }: Rundow
     const overIdx = activities.findIndex(a => a.id === overId);
 
     if (activeIdx !== -1 && overIdx !== -1) {
-      const reordered = arrayMove(activities, activeIdx, overIdx).map((item, idx) => ({
-        ...item,
-        order_index: idx
-      }));
+      // Find the earliest start time among activities in this day
+      const dayStartTime = activities.reduce((earliest, act) => {
+        const time = act.start_time.substring(0, 5);
+        return time < earliest ? time : earliest;
+      }, activities[0].start_time.substring(0, 5));
 
-      // Update locally (keep user-entered start_time and end_time intact)
+      const reorderedRaw = arrayMove(activities, activeIdx, overIdx);
+      const resched = recalculateSchedule(reorderedRaw, dayStartTime);
+
+      if (!resched.success || !resched.activities) {
+        alert(resched.error || 'Nggak bisa, total durasi activity di hari ini lewat jam 23:59');
+        return; // Revert drop
+      }
+
+      const reordered = resched.activities;
+
+      // Update locally
       setDays(prevDays => {
         const newDays = [...prevDays];
         newDays[dayIndex].activities = reordered;
         return newDays;
       });
 
-      // Sync only order_index with API
+      // Sync with API
       const payload = reordered.map((item, idx) => ({
         id: item.id,
         rundown_day_id: day.id,
-        order_index: idx
+        order_index: idx,
+        start_time: item.start_time,
+        end_time: item.end_time
       }));
 
       try {
@@ -942,7 +952,12 @@ export default function RundownEditorClient({ initialTrip, initialDays }: Rundow
                     )
                   ) : (
                     /* Timeline Drag-and-Drop Cards View */
-                    <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+                    <DndContext 
+                      sensors={sensors} 
+                      onDragStart={handleDragStart}
+                      onDragEnd={handleDragEnd}
+                      onDragCancel={() => setActiveActivity(null)}
+                    >
                       <SortableContext 
                         items={day.activities?.map(a => a.id) || []} 
                         strategy={verticalListSortingStrategy}
@@ -964,6 +979,26 @@ export default function RundownEditorClient({ initialTrip, initialDays }: Rundow
                           )}
                         </div>
                       </SortableContext>
+                      
+                      <DragOverlay>
+                        {activeActivity ? (
+                          <div className="scale-103 rotate-1 shadow-2xl rounded-3xl bg-white/95 backdrop-blur-md border-2 border-[oklch(0.70_0.08_40)] p-4 z-50 pointer-events-none cursor-grabbing">
+                            <div className="flex items-center justify-between gap-3">
+                              <h4 className="font-extrabold text-sm text-[oklch(0.22_0.01_40)]">{activeActivity.title}</h4>
+                              <span className="inline-flex items-center gap-1 bg-slate-100 text-teal-700 px-2 py-0.5 rounded-md text-xs font-bold shrink-0">
+                                <Clock size={11} />
+                                {activeActivity.start_time.substring(0, 5)} - {activeActivity.end_time.substring(0, 5)}
+                              </span>
+                            </div>
+                            {activeActivity.location && (
+                              <p className="text-xs text-teal-600 font-medium mt-1 truncate flex items-center gap-1">
+                                <MapPin size={11} className="text-orange-500 shrink-0" />
+                                <span>{activeActivity.location}</span>
+                              </p>
+                            )}
+                          </div>
+                        ) : null}
+                      </DragOverlay>
                     </DndContext>
                   )}
                 </CardContent>
@@ -997,72 +1032,16 @@ export default function RundownEditorClient({ initialTrip, initialDays }: Rundow
                 required
               />
             </div>
-
-            <div className="space-y-1.5 relative">
-              <Label htmlFor="location" className="text-xs font-semibold">Lokasi Kegiatan</Label>
-              <div className="relative">
-                <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                  <Search size={14} className="text-[oklch(0.48_0.01_40)]" />
-                </div>
-                <Input 
-                  id="location" 
-                  placeholder="Ketik nama lokasi (contoh: Stasiun Kiara Condong)" 
-                  value={location} 
-                  onChange={(e) => setLocation(e.target.value)} 
-                  className="rounded-xl border-[oklch(0.90_0.008_70)] pl-9 pr-9"
-                  autoComplete="off"
-                />
-                {searchLoading ? (
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2">
-                    <Loader2 className="animate-spin text-[oklch(0.48_0.01_40)]" size={14} />
-                  </span>
-                ) : location.length > 0 ? (
-                  <button
-                    type="button"
-                    onClick={() => { setLocation(''); setSuggestions([]); }}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[oklch(0.48_0.01_40)] hover:text-[oklch(0.22_0.01_40)] cursor-pointer"
-                  >
-                    <X size={14} />
-                  </button>
-                ) : null}
-              </div>
-              
-              {suggestions.length > 0 && (
-                <div className="absolute z-50 left-0 right-0 mt-1 bg-white border border-[oklch(0.90_0.008_70)] rounded-xl shadow-lg max-h-52 overflow-y-auto divide-y divide-[oklch(0.90_0.008_70)]/50">
-                  {suggestions.map((item: any, idx: number) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => selectLocation(item.display_name)}
-                      className="w-full text-left px-3 py-2.5 hover:bg-[oklch(0.92_0.008_240)] text-[oklch(0.22_0.01_40)] flex items-start gap-2 transition-colors"
-                    >
-                      <MapPin size={13} className="text-orange-500 shrink-0 mt-0.5" />
-                      <span className="text-[11px] leading-snug line-clamp-2">{item.display_name}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              {location.length >= 3 && suggestions.length === 0 && !searchLoading && (
-                <div className="flex items-center gap-2 mt-1.5 p-2.5 rounded-xl bg-[oklch(0.96_0.01_220)] border border-[oklch(0.90_0.02_220)]">
-                  <MapPin size={13} className="text-[oklch(0.55_0.06_210)] shrink-0" />
-                  <p className="text-[10px] text-[oklch(0.35_0.03_220)] flex-1">
-                    Teks lokasi Anda tetap tersimpan. Coba verifikasi atau salin nama lengkap dari Google Maps:
-                  </p>
-                  <a
-                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-[10px] font-bold text-[oklch(0.38_0.06_210)] hover:underline shrink-0 cursor-pointer"
-                  >
-                    <ExternalLink size={11} /> Buka Maps
-                  </a>
-                </div>
-              )}
-
-              <p className="text-[10px] text-[oklch(0.48_0.01_40)] mt-1">
-                💡 Ketik nama tempat. Rekomendasi akan muncul otomatis, termasuk lokasi mirip jika ejaan kurang tepat.
-              </p>
+            <div className="space-y-1.5">
+              <Label htmlFor="location" className="text-xs font-semibold">Lokasi Kegiatan (Opsional)</Label>
+              <LocationAutocomplete
+                value={location}
+                onChange={(val, lat, lon) => {
+                  setLocation(val);
+                  setLatitude(lat || null);
+                  setLongitude(lon || null);
+                }}
+              />
             </div>
 
             <div className="grid grid-cols-2 gap-4">

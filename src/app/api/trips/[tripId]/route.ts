@@ -91,15 +91,24 @@ export async function PUT(
       RETURNING *
     `;
 
+    // Handle explicit user-selected deleted days when trip duration reduces
+    const { deletedDayIds } = body;
+    if (deletedDayIds && Array.isArray(deletedDayIds) && deletedDayIds.length > 0) {
+      await sql`
+        DELETE FROM rundown_days
+        WHERE trip_id = ${tripId} AND id = ANY(${deletedDayIds})
+      `;
+    }
+
     // If dates changed, update or rebuild rundown days
-    if (prevStartStr !== data.start_date || prevEndStr !== data.end_date) {
+    if (prevStartStr !== data.start_date || prevEndStr !== data.end_date || (deletedDayIds && deletedDayIds.length > 0)) {
       const start = new Date(data.start_date);
       const end = new Date(data.end_date);
       const diffTime = Math.abs(end.getTime() - start.getTime());
       const newTotalDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
 
-      // Fetch existing days ordered by order_index
-      const existingDays = await sql`
+      // Fetch remaining days ordered by order_index
+      const remainingDays = await sql`
         SELECT id, day_date, order_index
         FROM rundown_days
         WHERE trip_id = ${tripId}
@@ -114,18 +123,18 @@ export async function PUT(
         targetDates.push(dayDate.toISOString().split('T')[0]);
       }
 
-      // Step A: Update existing days with their new target dates based on order_index
-      for (let i = 0; i < Math.min(existingDays.length, newTotalDays); i++) {
+      // Step A: Update remaining days with their new target dates based on order_index
+      for (let i = 0; i < Math.min(remainingDays.length, newTotalDays); i++) {
         await sql`
           UPDATE rundown_days
           SET day_date = ${targetDates[i]}, order_index = ${i}
-          WHERE id = ${existingDays[i].id}
+          WHERE id = ${remainingDays[i].id}
         `;
       }
 
       // Step B: If new date range is longer, insert extra days
-      if (newTotalDays > existingDays.length) {
-        for (let i = existingDays.length; i < newTotalDays; i++) {
+      if (newTotalDays > remainingDays.length) {
+        for (let i = remainingDays.length; i < newTotalDays; i++) {
           await sql`
             INSERT INTO rundown_days (trip_id, day_date, order_index)
             VALUES (${tripId}, ${targetDates[i]}, ${i})
@@ -134,8 +143,8 @@ export async function PUT(
         }
       }
 
-      // Step C: If new date range is shorter, delete overflow days
-      if (existingDays.length > newTotalDays) {
+      // Step C: If remaining days still exceed new total, prune leftover overflow
+      if (remainingDays.length > newTotalDays) {
         await sql`
           DELETE FROM rundown_days
           WHERE trip_id = ${tripId} AND order_index >= ${newTotalDays}

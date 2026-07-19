@@ -12,6 +12,8 @@ export const activitySchema = z.object({
   note: z.string().optional().or(z.literal('')),
   order_index: z.coerce.number().int().optional(),
   cost: z.coerce.number().min(0, 'Cost must be positive').default(0),
+  latitude: z.number().nullable().optional(),
+  longitude: z.number().nullable().optional(),
 });
 
 export const activityReorderSchema = z.object({
