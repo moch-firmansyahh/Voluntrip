@@ -1,23 +1,28 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import OnboardingScreen from '@/components/shared/OnboardingScreen';
 import SplashScreen from '@/components/shared/SplashScreen';
 
-function getInitialViewState() {
-  if (typeof window === 'undefined') return 'splash';
-  try {
-    const onboardingSeen = localStorage.getItem('voluntrip_onboarding_seen');
-    return onboardingSeen ? 'splash' : 'onboarding';
-  } catch (e) {
-    return 'splash';
-  }
-}
-
 export default function IndexPage() {
   const router = useRouter();
-  const [viewState] = useState<'onboarding' | 'splash'>(getInitialViewState);
+  const [mounted, setMounted] = useState(false);
+  const [viewState, setViewState] = useState<'onboarding' | 'splash'>('splash');
+
+  useEffect(() => {
+    setMounted(true);
+    try {
+      const onboardingSeen = localStorage.getItem('voluntrip_onboarding_seen');
+      if (!onboardingSeen) {
+        setViewState('onboarding');
+      } else {
+        setViewState('splash');
+      }
+    } catch (e) {
+      setViewState('splash');
+    }
+  }, []);
 
   const handleFinishOnboarding = () => {
     router.push('/login');
@@ -35,6 +40,11 @@ export default function IndexPage() {
       router.push('/login');
     }
   };
+
+  // Wait until mounted on client to prevent SSR state mismatch
+  if (!mounted) {
+    return <SplashScreen onFinish={() => {}} durationMs={999999} />;
+  }
 
   if (viewState === 'onboarding') {
     return <OnboardingScreen onFinish={handleFinishOnboarding} />;
