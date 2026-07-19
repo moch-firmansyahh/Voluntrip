@@ -394,70 +394,64 @@ export default function ExpensesClient({ initialData }: ExpensesClientProps) {
         </div>
       </div>
 
-      {/* Main Expenses Table */}
+      {/* Main Expenses Container */}
       <Card className="rounded-3xl border-[oklch(0.90_0.008_70)] shadow-sm bg-white overflow-hidden">
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-[oklch(0.98_0.006_70)]/80 border-b border-[oklch(0.90_0.008_70)] text-[11px] font-extrabold uppercase tracking-wider text-[oklch(0.40_0.02_40)]">
-                  <th className="py-3.5 px-4">Sumber & Kategori</th>
-                  <th className="py-3.5 px-4">Tanggal</th>
-                  <th className="py-3.5 px-4">Nama Pengeluaran / Agenda</th>
-                  <th className="py-3.5 px-4">Lokasi / Catatan</th>
-                  <th className="py-3.5 px-4 text-right">Jumlah (IDR)</th>
-                  <th className="py-3.5 px-4 text-center">Aksi</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[oklch(0.90_0.008_70)]/60 text-xs">
-                {filteredExpenses.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="py-12 text-center text-[oklch(0.48_0.01_40)]">
-                      <div className="flex flex-col items-center gap-2">
-                        <TrendingDown size={32} className="text-slate-300" />
-                        <p className="font-semibold text-sm">Tidak ada data pengeluaran terdeteksi</p>
-                        <p className="text-xs text-slate-400">
-                          {searchTerm ? 'Coba ubah kata kunci pencarian Anda' : 'Tambahkan pengeluaran manual atau beri estimasi biaya pada Itinerary.'}
-                        </p>
-                      </div>
-                    </td>
-                  </tr>
-                ) : (
-                  filteredExpenses.map((item) => (
-                    <tr key={item.id} className="hover:bg-slate-50/80 transition-colors">
-                      {/* Sumber & Kategori */}
-                      <td className="py-3.5 px-4 whitespace-nowrap">
-                        {item.source === 'itinerary' ? (
-                          <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full bg-teal-50 text-teal-700 border border-teal-200/60">
-                            <Calendar size={11} />
-                            Itinerary
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200/60">
-                            <Tag size={11} />
-                            {item.category_name || 'Manual'}
-                          </span>
-                        )}
-                      </td>
-
-                      {/* Tanggal */}
-                      <td className="py-3.5 px-4 font-medium text-slate-600 whitespace-nowrap">
+          {filteredExpenses.length === 0 ? (
+            <div className="py-12 text-center text-[oklch(0.48_0.01_40)]">
+              <div className="flex flex-col items-center gap-2">
+                <TrendingDown size={32} className="text-slate-300" />
+                <p className="font-semibold text-sm">Tidak ada data pengeluaran terdeteksi</p>
+                <p className="text-xs text-slate-400">
+                  {searchTerm ? 'Coba ubah kata kunci pencarian Anda' : 'Tambahkan pengeluaran manual atau beri estimasi biaya pada Itinerary.'}
+                </p>
+              </div>
+            </div>
+          ) : (
+            <>
+              {/* MOBILE COMPACT CARDS VIEW (md:hidden) - Zero horizontal scroll required */}
+              <div className="md:hidden divide-y divide-[oklch(0.90_0.008_70)]/60">
+                {filteredExpenses.map((item) => (
+                  <div key={item.id} className="p-4 space-y-2.5 hover:bg-slate-50/80 transition-colors">
+                    {/* Top Row: Category badge & Date */}
+                    <div className="flex items-center justify-between gap-2">
+                      {item.source === 'itinerary' ? (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-teal-50 text-teal-700 border border-teal-200/60">
+                          <Calendar size={11} />
+                          Itinerary
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200/60">
+                          <Tag size={11} />
+                          {item.category_name || 'Manual'}
+                        </span>
+                      )}
+                      <span className="text-[11px] font-medium text-slate-500">
                         {formatDateString(item.expense_date)}
-                      </td>
+                      </span>
+                    </div>
 
-                      {/* Nama Agenda / Title */}
-                      <td className="py-3.5 px-4 font-bold text-[oklch(0.22_0.01_40)]">
-                        {item.title}
+                    {/* Middle Row: Title & Amount */}
+                    <div className="flex items-start justify-between gap-3 pt-0.5">
+                      <div className="space-y-0.5 flex-1 min-w-0">
+                        <h4 className="font-bold text-xs text-[oklch(0.22_0.01_40)] leading-snug">
+                          {item.title}
+                        </h4>
                         {item.participants && item.participants.length > 0 && (
-                          <div className="flex items-center gap-1 text-[10px] font-normal text-amber-600 mt-0.5">
+                          <div className="flex items-center gap-1 text-[10px] font-normal text-amber-600">
                             <Users size={11} />
                             <span>Split bill ({item.participants.length} orang)</span>
                           </div>
                         )}
-                      </td>
+                      </div>
+                      <span className="font-extrabold font-heading text-sm text-[oklch(0.22_0.01_40)] shrink-0">
+                        {formatIDR(item.amount)}
+                      </span>
+                    </div>
 
-                      {/* Lokasi / Catatan */}
-                      <td className="py-3.5 px-4 text-slate-500 max-w-[220px] truncate">
+                    {/* Bottom Row: Location/Note & Action buttons */}
+                    <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-100 text-[11px]">
+                      <div className="text-slate-500 truncate flex-1 pr-2">
                         {item.location ? (
                           <span className="text-teal-700 font-medium">{item.location}</span>
                         ) : item.note ? (
@@ -465,50 +459,137 @@ export default function ExpensesClient({ initialData }: ExpensesClientProps) {
                         ) : (
                           <span className="text-slate-300">-</span>
                         )}
-                      </td>
+                      </div>
 
-                      {/* Jumlah (IDR) */}
-                      <td className="py-3.5 px-4 text-right font-extrabold font-heading text-[oklch(0.22_0.01_40)] whitespace-nowrap">
-                        {formatIDR(item.amount)}
-                      </td>
-
-                      {/* Aksi */}
-                      <td className="py-3.5 px-4 text-center whitespace-nowrap">
+                      <div className="shrink-0">
                         {item.source === 'itinerary' ? (
                           <Link 
                             href={`/trips/${tripId}/rundown`} 
-                            className="inline-flex items-center gap-1 text-[10px] font-bold text-teal-600 hover:text-teal-800 hover:underline px-2 py-1 rounded-lg bg-teal-50/50"
-                            title="Atur via Itinerary"
+                            className="inline-flex items-center gap-1 text-[10px] font-bold text-teal-600 hover:text-teal-800 px-2 py-1 rounded-lg bg-teal-50"
                           >
                             Buka Itinerary <ExternalLink size={11} />
                           </Link>
                         ) : (
-                          <div className="flex items-center justify-center gap-1">
+                          <div className="flex items-center gap-1">
                             <Button 
                               variant="ghost" 
                               size="sm" 
                               onClick={() => openEditModal(item)}
-                              className="h-7 w-7 p-0 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-100"
+                              className="h-7 px-2 text-[11px] font-semibold text-slate-600 hover:bg-slate-100 rounded-lg gap-1"
                             >
-                              <Edit2 size={13} />
+                              <Edit2 size={12} /> Edit
                             </Button>
                             <Button 
                               variant="ghost" 
                               size="sm" 
                               onClick={() => handleDelete(item.id)}
-                              className="h-7 w-7 p-0 rounded-lg text-red-500 hover:text-red-700 hover:bg-red-50"
+                              className="h-7 px-2 text-[11px] font-semibold text-red-500 hover:bg-red-50 rounded-lg gap-1"
                             >
-                              <Trash2 size={13} />
+                              <Trash2 size={12} /> Hapus
                             </Button>
                           </div>
                         )}
-                      </td>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* DESKTOP TABLE VIEW (hidden md:block) */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-[oklch(0.98_0.006_70)]/80 border-b border-[oklch(0.90_0.008_70)] text-[11px] font-extrabold uppercase tracking-wider text-[oklch(0.40_0.02_40)]">
+                      <th className="py-3.5 px-4">Sumber & Kategori</th>
+                      <th className="py-3.5 px-4">Tanggal</th>
+                      <th className="py-3.5 px-4">Nama Pengeluaran / Agenda</th>
+                      <th className="py-3.5 px-4">Lokasi / Catatan</th>
+                      <th className="py-3.5 px-4 text-right">Jumlah (IDR)</th>
+                      <th className="py-3.5 px-4 text-center">Aksi</th>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+                  </thead>
+                  <tbody className="divide-y divide-[oklch(0.90_0.008_70)]/60 text-xs">
+                    {filteredExpenses.map((item) => (
+                      <tr key={item.id} className="hover:bg-slate-50/80 transition-colors">
+                        <td className="py-3.5 px-4 whitespace-nowrap">
+                          {item.source === 'itinerary' ? (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full bg-teal-50 text-teal-700 border border-teal-200/60">
+                              <Calendar size={11} />
+                              Itinerary
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200/60">
+                              <Tag size={11} />
+                              {item.category_name || 'Manual'}
+                            </span>
+                          )}
+                        </td>
+
+                        <td className="py-3.5 px-4 font-medium text-slate-600 whitespace-nowrap">
+                          {formatDateString(item.expense_date)}
+                        </td>
+
+                        <td className="py-3.5 px-4 font-bold text-[oklch(0.22_0.01_40)]">
+                          {item.title}
+                          {item.participants && item.participants.length > 0 && (
+                            <div className="flex items-center gap-1 text-[10px] font-normal text-amber-600 mt-0.5">
+                              <Users size={11} />
+                              <span>Split bill ({item.participants.length} orang)</span>
+                            </div>
+                          )}
+                        </td>
+
+                        <td className="py-3.5 px-4 text-slate-500 max-w-[220px] truncate">
+                          {item.location ? (
+                            <span className="text-teal-700 font-medium">{item.location}</span>
+                          ) : item.note ? (
+                            <span className="italic">{item.note}</span>
+                          ) : (
+                            <span className="text-slate-300">-</span>
+                          )}
+                        </td>
+
+                        <td className="py-3.5 px-4 text-right font-extrabold font-heading text-[oklch(0.22_0.01_40)] whitespace-nowrap">
+                          {formatIDR(item.amount)}
+                        </td>
+
+                        <td className="py-3.5 px-4 text-center whitespace-nowrap">
+                          {item.source === 'itinerary' ? (
+                            <Link 
+                              href={`/trips/${tripId}/rundown`} 
+                              className="inline-flex items-center gap-1 text-[10px] font-bold text-teal-600 hover:text-teal-800 hover:underline px-2 py-1 rounded-lg bg-teal-50/50"
+                              title="Atur via Itinerary"
+                            >
+                              Buka Itinerary <ExternalLink size={11} />
+                            </Link>
+                          ) : (
+                            <div className="flex items-center justify-center gap-1">
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                onClick={() => openEditModal(item)}
+                                className="h-7 w-7 p-0 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-100"
+                              >
+                                <Edit2 size={13} />
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                onClick={() => handleDelete(item.id)}
+                                className="h-7 w-7 p-0 rounded-lg text-red-500 hover:text-red-700 hover:bg-red-50"
+                              >
+                                <Trash2 size={13} />
+                              </Button>
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
         </CardContent>
       </Card>
 
