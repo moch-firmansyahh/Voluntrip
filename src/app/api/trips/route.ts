@@ -3,6 +3,8 @@ import { getSession } from '@/lib/auth';
 import { sql } from '@/lib/supabase';
 import { tripSchema } from '@/lib/validators/trip.schema';
 
+export const revalidate = 0;
+
 // GET /api/trips - List all trips of the logged-in user
 export async function GET() {
   try {

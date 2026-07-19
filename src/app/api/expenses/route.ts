@@ -3,6 +3,8 @@ import { getSession } from '@/lib/auth';
 import { sql } from '@/lib/supabase';
 import { expenseSchema } from '@/lib/validators/expense.schema';
 
+export const revalidate = 0;
+
 // Helper to check trip ownership
 async function checkTripOwnership(tripId: string, userId: string) {
   const result = await sql`

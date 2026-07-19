@@ -3,6 +3,8 @@ import { cookies } from 'next/headers';
 import { sql } from '@/lib/supabase';
 import { getSession, signToken, hashPassword, comparePassword } from '@/lib/auth';
 
+export const revalidate = 0;
+
 // PUT /api/profile - Update profile details
 export async function PUT(request: Request) {
   try {
