@@ -9,6 +9,8 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import OnboardingScreen from '@/components/shared/OnboardingScreen';
+import SplashScreen from '@/components/shared/SplashScreen';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -18,6 +20,21 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+
+  // Welcome Screen & Onboarding states
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showSplash, setShowSplash] = useState(false);
+
+  React.useEffect(() => {
+    try {
+      const seen = localStorage.getItem('voluntrip_onboarding_seen');
+      if (!seen) {
+        setShowOnboarding(true);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }, []);
 
   // Forgot Password States
   const [isForgotOpen, setIsForgotOpen] = useState(false);
@@ -51,14 +68,13 @@ export default function LoginPage() {
 
       if (!response.ok) {
         setError(data.error || 'Terjadi kesalahan saat login');
+        setLoading(false);
       } else {
-        router.push('/dashboard');
-        router.refresh();
+        setShowSplash(true);
       }
     } catch (err) {
       setError('Koneksi gagal. Pastikan database server aktif.');
       console.error(err);
-    } finally {
       setLoading(false);
     }
   };
@@ -120,6 +136,14 @@ export default function LoginPage() {
       setForgotLoading(false);
     }
   };
+
+  if (showOnboarding) {
+    return <OnboardingScreen onFinish={() => setShowOnboarding(false)} />;
+  }
+
+  if (showSplash) {
+    return <SplashScreen onFinish={() => { window.location.href = '/dashboard'; }} durationMs={1200} />;
+  }
 
   return (
     <div className="min-h-screen bg-[oklch(0.98_0.006_70)] flex flex-col items-center justify-center p-4">

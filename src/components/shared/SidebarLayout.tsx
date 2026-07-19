@@ -38,7 +38,7 @@ export default function SidebarLayout({ children, user }: SidebarLayoutProps) {
 
   const handleLogout = () => {
     fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
-    router.push('/login');
+    window.location.href = '/login';
   };
 
   // Main navigation links
