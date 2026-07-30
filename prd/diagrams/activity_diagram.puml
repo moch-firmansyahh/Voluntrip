@@ -21,7 +21,7 @@ if (Pilihan Aksi User?) then (Drag & Drop Reorder)
     :Update Tampilan Timeline;
   endif
 
-else (Tambah Activity Baru)
+elseif (Pilihan Aksi User?) then (Tambah Activity Baru)
   :User Klik "Tambah Agenda";
   :Sistem Auto-Fill start_time dengan end_time Kegiatan Terakhir;
   :User Ketik Lokasi pada LocationAutocomplete;
