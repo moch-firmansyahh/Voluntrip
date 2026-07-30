@@ -1,0 +1,38 @@
+@startuml Voluntrip_Sequence_Drag_Reschedule
+autonumber
+skinparam backgroundColor #FFFFFF
+skinparam shadow true
+
+actor User
+participant "RundownEditorClient\n(React UI)" as UI
+participant "PointerSensor\n(@dnd-kit)" as Sensor
+participant "recalculateSchedule\n(Algorithm)" as Algo
+participant "API Route\n(/api/rundown/reorder)" as API
+database "Supabase PostgreSQL\n(Database)" as DB
+
+User -> UI: Long-press 500ms pada Card Activity
+UI -> Sensor: Trigger activation constraint (tolerance 8px)
+Sensor --> UI: Activation success (Floating Bubble Overlay active)
+User -> UI: Drag & Drop ke posisi urutan baru (index)
+UI -> Algo: recalculateSchedule(newActivitiesOrder)
+activate Algo
+
+Algo -> Algo: Hitung sekuensial start_time & end_time tiap kegiatan
+alt Total waktu > 23:59
+  Algo --> UI: Return Validation Error (Exceeds Day Boundary)
+  UI --> User: Tampilkan Notifikasi Toast Error
+else Waktu valid (<= 23:59)
+  Algo --> UI: Return recalculated activities array
+  deactivate Algo
+  UI -> API: PUT /api/rundown/reorder (Payload JSON)
+  activate API
+  API -> DB: UPDATE rundown_activities SET order_index, start_time, end_time
+  activate DB
+  DB --> API: Return Success (Rows Updated)
+  deactivate DB
+  API --> UI: HTTP 200 OK Response
+  deactivate API
+  UI --> User: Update UI Timeline Seketika
+end
+
+@enduml

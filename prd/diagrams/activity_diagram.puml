@@ -1,0 +1,48 @@
+@startuml Voluntrip_Activity_Diagram
+skinparam backgroundColor #FFFFFF
+skinparam shadow true
+
+start
+
+:User Membuka Halaman Rundown Trip;
+:Sistem Memuat Data Days & Activities dari API;
+
+if (Pilihan Aksi User?) then (Drag & Drop Reorder)
+  :User Long-Press Card Activity 500ms;
+  :Bubble Overlay Aktif;
+  :User Menggeser Card ke Urutan Baru;
+  :Sistem Menghitung Ulang Jam Sekuensial (recalculateSchedule);
+  
+  if (Jam Selesai > 23:59?) then (Ya)
+    :Batalkan Drag & Tampilkan Notifikasi Error;
+  else (Tidak)
+    :Kirim Reorder Payload ke API /api/rundown/reorder;
+    :Simpan Perubahan ke Database;
+    :Update Tampilan Timeline;
+  endif
+
+else (Tambah Activity Baru)
+  :User Klik "Tambah Agenda";
+  :Sistem Auto-Fill start_time dengan end_time Kegiatan Terakhir;
+  :User Ketik Lokasi pada LocationAutocomplete;
+  :API Photon OSM Mengembalikan Rekomendasi Lokasi & Latitude/Longitude;
+  :User Simpan Activity Baru;
+  :Simpan Data ke Database;
+
+else (Edit Tanggal Trip)
+  :User Mengubah Tanggal Trip di Modal Edit;
+  
+  if (Total Hari Berkurang?) then (Ya)
+    :Tampilkan Modal ConfirmDateChangeDialog;
+    :User Memilih Hari yang Ingin Dihapus;
+    :Hapus Hari Terpilih & Map Ulang order_index Hari Tersisa;
+  else (Tidak)
+    :Update Tanggal Trip Langsung;
+  endif
+  
+  :Kirim Request PUT /api/trips/[tripId];
+  :Database Update Success;
+endif
+
+stop
+@enduml

@@ -1,0 +1,39 @@
+@startuml Voluntrip_Sequence_Login
+autonumber
+skinparam backgroundColor #FFFFFF
+skinparam shadow true
+
+actor User
+participant "LoginPage\n(React)" as UI
+participant "Auth API\n(/api/auth/login)" as API
+participant "Auth Helper\n(auth.ts)" as Auth
+database "Supabase DB" as DB
+
+User -> UI: Input Username, Password & Centang "Ingat Saya 30 Hari"
+User -> UI: Klik Tombol "Masuk"
+UI -> API: POST /api/auth/login { username, password, rememberMe: true }
+activate API
+
+API -> DB: SELECT * FROM users WHERE username = ?
+activate DB
+DB --> API: User Record Data
+deactivate DB
+
+API -> Auth: comparePassword(password, hash)
+activate Auth
+Auth --> API: Password Valid (true)
+deactivate Auth
+
+API -> Auth: signToken(payload, '30d')
+activate Auth
+Auth --> API: JWT Token String
+deactivate Auth
+
+API -> API: Set HTTP-Only Cookie voluntrip_session (maxAge: 30d)
+API --> UI: HTTP 200 OK { success: true }
+deactivate API
+
+UI -> UI: Tampilkan Traveloka-Style Splash Screen (1.2s)
+UI -> User: Redirect ke /dashboard
+
+@enduml

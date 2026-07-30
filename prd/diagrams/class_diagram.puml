@@ -1,0 +1,100 @@
+@startuml Voluntrip_Class_Diagram
+skinparam classAttributeIconSize 0
+skinparam backgroundColor #FFFFFF
+skinparam packageStyle rectangle
+skinparam roundcorner 10
+skinparam shadow true
+
+package "Authentication Domain" {
+  class User {
+    + id: UUID
+    + username: String
+    + password_hash: String
+    + full_name: String
+    + email: String
+    + avatar_url: String
+    + created_at: Timestamp
+    + verifyPassword(plainPassword: String): Boolean
+    + generateJWT(expiresIn: String): String
+  }
+}
+
+package "Trip Domain" {
+  class Trip {
+    + id: UUID
+    + user_id: UUID
+    + name: String
+    + destination: String
+    + start_date: Date
+    + end_date: Date
+    + cover_image: String
+    + budget_total: Decimal
+    + expense_mode: String
+    + share_token: String
+    + is_public: Boolean
+    + created_at: Timestamp
+    + getDurationDays(): Integer
+    + generateShareToken(): String
+  }
+
+  class RundownDay {
+    + id: UUID
+    + trip_id: UUID
+    + day_date: Date
+    + order_index: Integer
+  }
+
+  class RundownActivity {
+    + id: UUID
+    + rundown_day_id: UUID
+    + title: String
+    + location: String
+    + start_time: Time
+    + end_time: Time
+    + cost: Decimal
+    + latitude: Double
+    + longitude: Double
+    + note: String
+    + order_index: Integer
+    + getDurationMinutes(): Integer
+  }
+}
+
+package "Expense Domain" {
+  class ExpenseCategory {
+    + id: UUID
+    + trip_id: UUID
+    + name: String
+  }
+
+  class Expense {
+    + id: UUID
+    + trip_id: UUID
+    + category_id: UUID
+    + amount: Decimal
+    + note: String
+    + expense_date: Date
+    + source: String
+    + activity_id: UUID
+    + created_at: Timestamp
+  }
+
+  class ExpenseParticipant {
+    + id: UUID
+    + expense_id: UUID
+    + participant_name: String
+    + share_amount: Decimal
+  }
+}
+
+' Relationships
+User "1" -- "0..*" Trip : owns >
+Trip "1" *-- "1..*" RundownDay : contains >
+RundownDay "1" *-- "0..*" RundownActivity : contains >
+Trip "1" *-- "0..*" ExpenseCategory : defines >
+Trip "1" *-- "0..*" Expense : tracks >
+ExpenseCategory "1" -- "0..*" Expense : categorizes >
+Expense "1" *-- "0..*" ExpenseParticipant : splits >
+RundownActivity "0..1" -- "0..1" Expense : syncs cost >
+
+@enduml

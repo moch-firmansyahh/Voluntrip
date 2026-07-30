@@ -1,0 +1,65 @@
+@startuml Voluntrip_UseCase_Diagram
+left to right direction
+skinparam packageStyle rect
+skinparam backgroundColor #FFFFFF
+skinparam shadow true
+
+actor "Traveler / Registered User" as User
+actor "Public Visitor (Guest)" as Guest
+actor "System Developer" as Dev
+
+rectangle "Voluntrip Application System" {
+  
+  package "Auth & Profile Management" {
+    usecase "UC-1: Login Akun & Remember Me" as UC1
+    usecase "UC-2: Logout Instan (0ms)" as UC2
+    usecase "UC-3: Reset Password Akun" as UC3
+    usecase "UC-4: Kelola Profile Settings" as UC4
+  }
+
+  package "Trip & Rundown Management" {
+    usecase "UC-5: Kelola Trip (CRUD)" as UC5
+    usecase "UC-6: Edit Tanggal Trip Aman (Safe Date Edit)" as UC6
+    usecase "UC-7: Long-Press Drag & Drop Reorder" as UC7
+    usecase "UC-8: Auto-Reschedule Sekuensial Jam" as UC8
+    usecase "UC-9: Autocomplete Lokasi (Photon OSM)" as UC9
+    usecase "UC-10: Visualisasi Peta Leaflet" as UC10
+  }
+
+  package "Expenses & Sharing" {
+    usecase "UC-11: Kelola Biaya & Split Bill" as UC11
+    usecase "UC-12: Generate / Revoke Link Share Publik" as UC12
+    usecase "UC-13: Lihat Itinerary View-Only" as UC13
+  }
+
+  package "System Administration" {
+    usecase "UC-14: Provisioning Akun User Baru" as UC14
+  }
+}
+
+' User Interactions
+User --> UC1
+User --> UC2
+User --> UC3
+User --> UC4
+User --> UC5
+User --> UC6
+User --> UC7
+User --> UC8
+User --> UC9
+User --> UC10
+User --> UC11
+User --> UC12
+
+' Guest Interactions
+Guest --> UC13
+
+' Developer Interactions
+Dev --> UC14
+
+' Relationships
+UC7 .> UC8 : <<includes>>
+UC5 .> UC6 : <<extends>>
+UC12 .> UC13 : <<enables>>
+
+@enduml

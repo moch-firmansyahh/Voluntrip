@@ -108,9 +108,113 @@ Aplikasi ini diciptakan untuk menyelesaikan masalah umum traveler: jadwal bentro
 
 ## 7. System Architecture & PlantUML Diagrams
 
-### 7.1 Class Diagram
-Diagram kelas yang menggambarkan struktur data dan entitas sistem Voluntrip:
+> 📂 **File Kode PlantUML (.puml) Terpisah**:
+> - [Class Diagram File (`class_diagram.puml`)](./diagrams/class_diagram.puml)
+> - [Use Case Diagram File (`usecase_diagram.puml`)](./diagrams/usecase_diagram.puml)
+> - [Sequence Drag & Reschedule File (`sequence_drag_reschedule.puml`)](./diagrams/sequence_drag_reschedule.puml)
+> - [Sequence Login File (`sequence_login.puml`)](./diagrams/sequence_login.puml)
+> - [Activity Diagram File (`activity_diagram.puml`)](./diagrams/activity_diagram.puml)
 
+---
+
+### 7.1 Class Diagram
+
+#### 📊 Tampilan Visual Diagram (Mermaid Native GitHub Render)
+```mermaid
+classDiagram
+    namespace AuthenticationDomain {
+        class User {
+            +UUID id
+            +String username
+            +String password_hash
+            +String full_name
+            +String email
+            +String avatar_url
+            +Timestamp created_at
+            +verifyPassword(plainPassword) Boolean
+            +generateJWT(expiresIn) String
+        }
+    }
+
+    namespace TripDomain {
+        class Trip {
+            +UUID id
+            +UUID user_id
+            +String name
+            +String destination
+            +Date start_date
+            +Date end_date
+            +String cover_image
+            +Decimal budget_total
+            +String expense_mode
+            +String share_token
+            +Boolean is_public
+            +Timestamp created_at
+            +getDurationDays() Integer
+            +generateShareToken() String
+        }
+
+        class RundownDay {
+            +UUID id
+            +UUID trip_id
+            +Date day_date
+            +Integer order_index
+        }
+
+        class RundownActivity {
+            +UUID id
+            +UUID rundown_day_id
+            +String title
+            +String location
+            +Time start_time
+            +Time end_time
+            +Decimal cost
+            +Double latitude
+            +Double longitude
+            +String note
+            +Integer order_index
+            +getDurationMinutes() Integer
+        }
+    }
+
+    namespace ExpenseDomain {
+        class ExpenseCategory {
+            +UUID id
+            +UUID trip_id
+            +String name
+        }
+
+        class Expense {
+            +UUID id
+            +UUID trip_id
+            +UUID category_id
+            +Decimal amount
+            +String note
+            +Date expense_date
+            +String source
+            +UUID activity_id
+            +Timestamp created_at
+        }
+
+        class ExpenseParticipant {
+            +UUID id
+            +UUID expense_id
+            +String participant_name
+            +Decimal share_amount
+        }
+    }
+
+    User "1" -- "0..*" Trip : owns
+    Trip "1" *-- "1..*" RundownDay : contains
+    RundownDay "1" *-- "0..*" RundownActivity : contains
+    Trip "1" *-- "0..*" ExpenseCategory : defines
+    Trip "1" *-- "0..*" Expense : tracks
+    ExpenseCategory "1" -- "0..*" Expense : categorizes
+    Expense "1" *-- "0..*" ExpenseParticipant : splits
+    RundownActivity "0..1" -- "0..1" Expense : syncs cost
+```
+
+#### 📜 PlantUML Code Specification ([File: `class_diagram.puml`](./diagrams/class_diagram.puml))
 ```plantuml
 @startuml Voluntrip_Class_Diagram
 skinparam classAttributeIconSize 0
@@ -215,8 +319,60 @@ RundownActivity "0..1" -- "0..1" Expense : syncs cost >
 ---
 
 ### 7.2 Use Case Diagram
-Diagram use case yang menggambarkan interaksi aktor (User, Public Visitor, Developer) dengan sistem:
 
+#### 📊 Tampilan Visual Diagram (Mermaid Native GitHub Render)
+```mermaid
+graph LR
+    subgraph System["Voluntrip Application System"]
+        subgraph AuthProfile["Auth & Profile"]
+            UC1["UC-1: Login Akun & Remember Me"]
+            UC2["UC-2: Logout Instan (0ms)"]
+            UC3["UC-3: Reset Password Akun"]
+            UC4["UC-4: Kelola Profile Settings"]
+        end
+
+        subgraph TripRundown["Trip & Rundown Management"]
+            UC5["UC-5: Kelola Trip (CRUD)"]
+            UC6["UC-6: Edit Tanggal Trip Aman"]
+            UC7["UC-7: Long-Press Drag & Drop Reorder"]
+            UC8["UC-8: Auto-Reschedule Sekuensial Jam"]
+            UC9["UC-9: Autocomplete Lokasi OSM"]
+            UC10["UC-10: Visualisasi Peta Leaflet"]
+        end
+
+        subgraph ExpensesSharing["Expenses & Sharing"]
+            UC11["UC-11: Kelola Biaya & Split Bill"]
+            UC12["UC-12: Generate / Revoke Link Share"]
+            UC13["UC-13: Lihat Itinerary View-Only"]
+        end
+
+        subgraph Admin["System Admin"]
+            UC14["UC-14: Provisioning Akun User"]
+        end
+    end
+
+    User(("Traveler / User")) --> UC1
+    User --> UC2
+    User --> UC3
+    User --> UC4
+    User --> UC5
+    User --> UC6
+    User --> UC7
+    User --> UC8
+    User --> UC9
+    User --> UC10
+    User --> UC11
+    User --> UC12
+
+    Guest(("Public Visitor")) --> UC13
+    Dev(("System Developer")) --> UC14
+
+    UC7 -.->|includes| UC8
+    UC5 -.->|extends| UC6
+    UC12 -.->|enables| UC13
+```
+
+#### 📜 PlantUML Code Specification ([File: `usecase_diagram.puml`](./diagrams/usecase_diagram.puml))
 ```plantuml
 @startuml Voluntrip_UseCase_Diagram
 left to right direction
@@ -227,9 +383,9 @@ actor "Traveler / Registered User" as User
 actor "Public Visitor (Guest)" as Guest
 actor "System Developer" as Dev
 
-rectangle "Voluntrip Application" {
+rectangle "Voluntrip Application System" {
   
-  package "Auth & Profile" {
+  package "Auth & Profile Management" {
     usecase "UC-1: Login Akun & Remember Me" as UC1
     usecase "UC-2: Logout Instan (0ms)" as UC2
     usecase "UC-3: Reset Password Akun" as UC3
@@ -256,7 +412,6 @@ rectangle "Voluntrip Application" {
   }
 }
 
-' User Interactions
 User --> UC1
 User --> UC2
 User --> UC3
@@ -270,13 +425,9 @@ User --> UC10
 User --> UC11
 User --> UC12
 
-' Guest Interactions
 Guest --> UC13
-
-' Developer Interactions
 Dev --> UC14
 
-' Includes & Extends
 UC7 .> UC8 : <<includes>>
 UC5 .> UC6 : <<extends>>
 UC12 .> UC13 : <<enables>>
@@ -288,10 +439,44 @@ UC12 .> UC13 : <<enables>>
 
 ### 7.3 Sequence Diagrams
 
-#### Sequence 1: Drag & Drop Activity Reorder dengan Auto-Reschedule
+#### 1. Drag & Drop Activity Reorder dengan Auto-Reschedule
+
+##### 📊 Tampilan Visual Diagram (Mermaid Native GitHub Render)
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as Traveler
+    participant UI as RundownEditorClient (React UI)
+    participant Sensor as PointerSensor (@dnd-kit)
+    participant Algo as recalculateSchedule (Algorithm)
+    participant API as API Route (/api/rundown/reorder)
+    participant DB as Supabase PostgreSQL
+
+    User->>UI: Long-press 500ms pada Card Activity
+    UI->>Sensor: Trigger activation constraint (tolerance 8px)
+    Sensor-->>UI: Activation success (Floating Bubble Overlay active)
+    User->>UI: Drag & Drop ke posisi urutan baru (index)
+    UI->>Algo: recalculateSchedule(newActivitiesOrder)
+    
+    alt Total waktu > 23:59
+        Algo-->>UI: Return Validation Error (Exceeds Day Boundary)
+        UI-->>User: Tampilkan Notifikasi Toast Error
+    else Waktu valid (<= 23:59)
+        Algo-->>UI: Return recalculated activities array
+        UI->>API: PUT /api/rundown/reorder (Payload JSON)
+        API->>DB: UPDATE rundown_activities SET order_index, start_time, end_time
+        DB-->>API: Return Success (Rows Updated)
+        API-->>UI: HTTP 200 OK Response
+        UI-->>User: Update UI Timeline Seketika
+    end
+```
+
+##### 📜 PlantUML Code Specification ([File: `sequence_drag_reschedule.puml`](./diagrams/sequence_drag_reschedule.puml))
 ```plantuml
 @startuml Voluntrip_Sequence_Drag_Reschedule
 autonumber
+skinparam backgroundColor #FFFFFF
+
 actor User
 participant "RundownEditorClient\n(React UI)" as UI
 participant "PointerSensor\n(@dnd-kit)" as Sensor
@@ -327,10 +512,39 @@ end
 @enduml
 ```
 
-#### Sequence 2: User Login & Session Persistence
+#### 2. User Login & Session Persistence
+
+##### 📊 Tampilan Visual Diagram (Mermaid Native GitHub Render)
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as Traveler
+    participant UI as LoginPage (React)
+    participant API as Auth API (/api/auth/login)
+    participant Auth as Auth Helper (auth.ts)
+    participant DB as Supabase DB
+
+    User->>UI: Input Username, Password & Centang "Ingat Saya 30 Hari"
+    User->>UI: Klik Tombol "Masuk"
+    UI->>API: POST /api/auth/login { username, password, rememberMe: true }
+    API->>DB: SELECT * FROM users WHERE username = ?
+    DB-->>API: User Record Data
+    API->>Auth: comparePassword(password, hash)
+    Auth-->>API: Password Valid (true)
+    API->>Auth: signToken(payload, '30d')
+    Auth-->>API: JWT Token String
+    API->>API: Set HTTP-Only Cookie voluntrip_session (maxAge: 30d)
+    API-->>UI: HTTP 200 OK { success: true }
+    UI->>UI: Tampilkan Traveloka-Style Splash Screen (1.2s)
+    UI->>User: Redirect ke /dashboard
+```
+
+##### 📜 PlantUML Code Specification ([File: `sequence_login.puml`](./diagrams/sequence_login.puml))
 ```plantuml
 @startuml Voluntrip_Sequence_Login
 autonumber
+skinparam backgroundColor #FFFFFF
+
 actor User
 participant "LoginPage\n(React)" as UI
 participant "Auth API\n(/api/auth/login)" as API
@@ -370,11 +584,61 @@ UI -> User: Redirect ke /dashboard
 ---
 
 ### 7.4 Activity Diagram
-Activity Diagram proses penyusunan Rundown & Pengeditan Tanggal Trip Aman (*Safe Date Edit*):
 
+#### 📊 Tampilan Visual Diagram (Mermaid Native GitHub Render)
+```mermaid
+stateDiagram-v2
+    [*] --> Start
+    Start --> LoadRundown : Membuka Halaman Rundown Trip
+    LoadRundown --> ActionChoice : Data Days & Activities Dimuat
+
+    state ActionChoice <<choice>>
+    ActionChoice --> ReorderFlow : Drag & Drop Reorder
+    ActionChoice --> AddActivityFlow : Tambah Activity Baru
+    ActionChoice --> EditDateFlow : Edit Tanggal Trip
+
+    state ReorderFlow {
+        LongPress --> BubbleOverlay : Long-Press 500ms
+        BubbleOverlay --> DropIndex : Geser ke Posisi Baru
+        DropIndex --> Recalculate : Hitung Jam Sekuensial
+    }
+
+    Recalculate --> TimeCheck
+    state TimeCheck <<choice>>
+    TimeCheck --> CancelReorder : Jam Selesai > 23:59
+    TimeCheck --> SaveReorder : Jam Valid <= 23:59
+    CancelReorder --> LoadRundown
+    SaveReorder --> UpdateDB : PUT /api/rundown/reorder
+
+    state AddActivityFlow {
+        ClickAdd --> AutoFillStart : Pre-fill start_time dari kegiatan sebelumnya
+        AutoFillStart --> TypeLocation : Ketik Nama Tempat
+        TypeLocation --> FetchPhoton : Autocomplete Photon OSM API (Lat/Lng)
+        FetchPhoton --> SaveActivity : Simpan Agenda Baru
+    }
+
+    state EditDateFlow {
+        ChangeDates --> CheckDuration
+    }
+
+    state CheckDuration <<choice>>
+    CheckDuration --> ShowConfirmDialog : Total Hari Berkurang
+    CheckDuration --> DirectUpdate : Hari Bertambah / Tetap
+    ShowConfirmDialog --> SelectDaysToDelete : User Pilih Hari Dihapus
+    SelectDaysToDelete --> ReMapOrder : Map Ulang order_index
+    ReMapOrder --> DirectUpdate
+    DirectUpdate --> UpdateTripDB : PUT /api/trips/[tripId]
+
+    UpdateDB --> [*]
+    SaveActivity --> [*]
+    UpdateTripDB --> [*]
+```
+
+#### 📜 PlantUML Code Specification ([File: `activity_diagram.puml`](./diagrams/activity_diagram.puml))
 ```plantuml
 @startuml Voluntrip_Activity_Diagram
 skinparam backgroundColor #FFFFFF
+
 start
 
 :User Membuka Halaman Rundown Trip;
@@ -518,8 +782,14 @@ CREATE TABLE IF NOT EXISTS expense_participants (
 ```text
 Voluntrip/
 ├── prd/
-│   ├── PRD.md                 # Dokumen PRD Utama & Diagram PlantUML
-│   └── README.md              # Ringkasan Eksekutif PRD
+│   ├── PRD.md                 # Dokumen PRD Utama & Diagram (Mermaid & PlantUML)
+│   ├── README.md              # Ringkasan PRD & Link Diagram
+│   └── diagrams/              # Folder File Sumber PlantUML (.puml)
+│       ├── class_diagram.puml
+│       ├── usecase_diagram.puml
+│       ├── sequence_drag_reschedule.puml
+│       ├── sequence_login.puml
+│       └── activity_diagram.puml
 ├── public/
 │   ├── icon-192x192.png       # Ikon PWA 192px
 │   ├── icon-512x512.png       # Ikon PWA 512px
