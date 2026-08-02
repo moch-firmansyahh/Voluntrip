@@ -3,6 +3,8 @@ import { getSession } from '@/lib/auth';
 import { sql } from '@/lib/supabase';
 import { activityReorderSchema } from '@/lib/validators/rundown.schema';
 
+export const revalidate = 0;
+
 // POST /api/rundown/reorder
 export async function POST(request: Request) {
   try {

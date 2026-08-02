@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { sql } from '@/lib/supabase';
 import { getSession } from '@/lib/auth';
 
+export const revalidate = 0;
+
 // Helper to add days to a date string
 function addDays(dateStr: string, days: number): string {
   const d = new Date(dateStr);

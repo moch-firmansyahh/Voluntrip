@@ -681,6 +681,81 @@ export default function ExpensesClient({ initialData }: ExpensesClientProps) {
               />
             </div>
 
+            {/* Split Bill Participant Section (When trip expense_mode === 'split') */}
+            {data.trip?.expense_mode === 'split' && (
+              <div className="space-y-3 pt-3 border-t border-[oklch(0.90_0.008_70)]/60 animate-fade-in">
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs font-bold text-amber-700 flex items-center gap-1.5">
+                    <Users size={14} /> Split Bill (Pembagian Biaya Peserta)
+                  </Label>
+                  {participants.length > 0 && (
+                    <Button 
+                      type="button" 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => {
+                        if (participants.length === 0) return;
+                        const total = parseBudgetShorthand(amount);
+                        if (total <= 0) return;
+                        const equalShare = Math.round(total / participants.length);
+                        setParticipants(prev => prev.map(p => ({ ...p, share: equalShare.toString() })));
+                      }}
+                      className="text-[10px] h-6 px-2 text-teal-600 hover:bg-teal-50 rounded-lg font-bold cursor-pointer"
+                    >
+                      ⚡ Bagi Rata
+                    </Button>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  {participants.map((p, idx) => (
+                    <div key={idx} className="flex items-center gap-2">
+                      <Input 
+                        placeholder="Nama Peserta"
+                        value={p.name}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setParticipants(prev => prev.map((item, i) => i === idx ? { ...item, name: val } : item));
+                        }}
+                        className="rounded-xl text-xs h-9 flex-1"
+                        required
+                      />
+                      <Input 
+                        type="number"
+                        placeholder="Nominal (IDR)"
+                        value={p.share}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setParticipants(prev => prev.map((item, i) => i === idx ? { ...item, share: val } : item));
+                        }}
+                        className="rounded-xl text-xs h-9 w-32"
+                        required
+                      />
+                      <Button 
+                        type="button" 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => setParticipants(prev => prev.filter((_, i) => i !== idx))}
+                        className="h-9 w-9 p-0 text-red-500 hover:bg-red-50 rounded-xl shrink-0 cursor-pointer"
+                      >
+                        <Trash2 size={13} />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setParticipants(prev => [...prev, { name: '', share: '' }])}
+                  className="w-full text-xs h-8 border-dashed rounded-xl text-amber-700 hover:bg-amber-50/50 gap-1 font-bold cursor-pointer"
+                >
+                  <Plus size={13} /> Tambah Peserta Split Bill
+                </Button>
+              </div>
+            )}
+
             <DialogFooter className="pt-4 gap-2">
               <Button type="button" variant="ghost" onClick={() => setIsOpen(false)} className="rounded-xl text-xs">
                 Batal
