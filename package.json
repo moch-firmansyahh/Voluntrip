@@ -1,12 +1,13 @@
 {
-  "name": "temp-app",
+  "name": "voluntrip",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:setup": "node scripts/setup-db.js"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",

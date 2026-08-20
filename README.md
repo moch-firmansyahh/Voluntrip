@@ -83,6 +83,9 @@ Voluntrip/
 │   ├── manifest.json          # Konfigurasi PWA Manifest
 │   └── images/
 │       └── Logo_voluntrip.png # Logo Utama Voluntrip
+├── scripts/                   # Skrip Utilitas & Migrasi
+│   ├── schema.sql             # Skrip DDL Skema Supabase PostgreSQL
+│   └── setup-db.js            # Runner Otomatis Inisialisasi Database
 ├── src/
 │   ├── app/                   # Next.js App Router
 │   │   ├── (auth)/            # Auth Pages (Login, Register)
@@ -133,7 +136,11 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=<your-supabase-anon-key>
 ```
 
 ### 4. Eksekusi Skema Database
-Lihat skema database lengkap dan relasi tabel pada file [PRD.md](file:///c:/Users/Firman/Documents/WebDev/Website/Voluntrip/prd/PRD.md) di direktori `prd/`. Impor query skema ke **SQL Editor Supabase** Anda untuk tabel:
+Anda dapat menjalankan inisialisasi skema database secara otomatis melalui terminal:
+```bash
+npm run db:setup
+```
+Atau salin dan jalankan isi query SQL dari file [scripts/schema.sql](file:///c:/Users/Firman/Documents/WebDev/Website/Voluntrip/scripts/schema.sql) langsung di **SQL Editor Supabase** Anda untuk membuat tabel:
 * `users`
 * `trips`
 * `rundown_days`

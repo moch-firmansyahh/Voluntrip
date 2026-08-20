@@ -18,7 +18,7 @@ const sql = postgres(connectionString, {
 
 async function runSetup() {
   try {
-    const schemaPath = path.join(__dirname, '..', 'supabase_schema.sql');
+    const schemaPath = path.join(__dirname, 'schema.sql');
     console.log(`Reading schema file from: ${schemaPath}`);
     const sqlContent = fs.readFileSync(schemaPath, 'utf8');
 
