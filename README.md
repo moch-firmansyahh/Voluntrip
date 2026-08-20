@@ -36,8 +36,9 @@
 * **Manajemen Trip**: Buat trip baru dengan nama, destinasi, tanggal mulai, tanggal selesai, estimasi budget, dan foto cover.
 * **Edit Tanggal Aman**: Saat mengubah rentang tanggal trip yang mengurangi jumlah hari, Voluntrip menyediakan dialog konfirmasi untuk memilih hari mana yang ingin dihapus tanpa mengacaukan urutan hari tersisa.
 
-### 💰 3. Expense Tracker & Budgeting
+### 💰 3. Expense Tracker, Budgeting & Split Bill
 * **Manajemen Pengeluaran**: Catat pengeluaran perjalanan berdasarkan kategori (Akomodasi, Transportasi, Kuliner, Tiket, dll).
+* **Split Bill & Pembagian Biaya**: Dukungan perhitungan pembagian tagihan rata (*equal share*) untuk setiap peserta trip dengan kalkulator otomatis.
 * **Sinkronisasi Biaya Itinerary & Manual**: Lacak akumulasi biaya kegiatan itinerary serta pengeluaran manual secara akurat.
 * **Indikator Real-time Budget**: Pantau sisa anggaran trip secara langsung.
 
@@ -72,6 +73,10 @@
 
 ```text
 Voluntrip/
+├── prd/                       # Product Requirements Document & Desain Sistem
+│   ├── PRD.md                 # Dokumentasi Lengkap PRD & Diagram Mermaid
+│   ├── README.md              # Ringkasan PRD & Panduan Diagram
+│   └── diagrams/              # File PlantUML (.puml) Dedicated
 ├── public/
 │   ├── icon-192x192.png       # Ikon PWA 192px
 │   ├── icon-512x512.png       # Ikon PWA 512px
@@ -93,7 +98,6 @@ Voluntrip/
 │       ├── auth.ts            # JWT Signing & Session Verifier
 │       ├── supabase.ts        # Supabase Postgres Client Connection
 │       └── validators/        # Zod Schemas (trip, rundown, expense)
-├── supabase_schema.sql        # Skema SQL Tabel Database Supabase
 ├── next.config.ts             # Konfigurasi Next.js & PWA Plugin
 └── package.json               # Dependensi Project
 ```
@@ -129,7 +133,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=<your-supabase-anon-key>
 ```
 
 ### 4. Eksekusi Skema Database
-Impor dan jalankan seluruh query SQL dari file `supabase_schema.sql` di **SQL Editor Supabase** Anda untuk membuat tabel:
+Lihat skema database lengkap dan relasi tabel pada file [PRD.md](file:///c:/Users/Firman/Documents/WebDev/Website/Voluntrip/prd/PRD.md) di direktori `prd/`. Impor query skema ke **SQL Editor Supabase** Anda untuk tabel:
 * `users`
 * `trips`
 * `rundown_days`
