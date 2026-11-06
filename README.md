@@ -9,7 +9,7 @@
 
   [![Next.js](https://img.shields.io/badge/Next.js-16_App_Router-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
   [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
-  [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.x-38B2AC?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com/)
+  [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4.x-38B2AC?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com/)
   [![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3ECF8E?style=for-the-badge&logo=supabase)](https://supabase.com/)
   [![PWA Ready](https://img.shields.io/badge/PWA-Supported-FF6F61?style=for-the-badge&logo=pwa)](https://web.dev/progressive-web-apps/)
 
@@ -126,7 +126,11 @@ npm install
 ```
 
 ### 3. Konfigurasi Environment Variable
-Buat file `.env` di root direktori project dan tambahkan kredensial berikut:
+Salin template `.env.example` ke file `.env` di root direktori project:
+```bash
+cp .env.example .env
+```
+Kemudian lengkapi nilai kredensial berikut:
 
 ```env
 DATABASE_URL=postgresql://postgres:<password>@db.<project-ref>.supabase.co:5432/postgres
@@ -183,7 +187,7 @@ Aplikasi Voluntrip siap di-deploy secara langsung ke platform **Vercel**:
 
 ## 📄 Lisensi & Kontribusi
 
-Proyek ini dikembangkan oleh **Moch Firmansyah** untuk Voluntrip. Kontribusi, masukan, dan saran sangat dialukan!
+Proyek ini dikembangkan oleh **Moch Firmansyah** untuk Voluntrip. Kontribusi, masukan, dan saran sangat terbuka dan dialu-alukan!
 
 ---
 
